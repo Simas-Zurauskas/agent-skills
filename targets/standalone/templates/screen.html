@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>R{R} V{NN} · {Screen name}</title>
+  <!-- the variant's fonts: the same <link> as head.html -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={Family+One}:wght@{w}&family={Family+Two}:wght@{w}&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <!-- Optional: Tailwind v4 utilities with no build step. Leave it out if style.css does everything. -->
+  <!-- <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script> -->
+</head>
+<body class="r{R}-v{NN}" style="margin:0">
+  <!-- 390 × 844. style.css sizes this frame: e.g. .r{R}-v{NN} .screen { display:flex; flex-direction:column; height:100dvh; overflow:hidden } -->
+  <div class="screen">
+    <!-- the variant's own 47 pt status bar: a time the story allows (not a reflexive 9:41) + signal / wifi / battery icons, in its colours and its world's glyph style -->
+    <main class="scroll"><!-- the screen; style.css: flex:1; min-height:0; overflow-y:auto --></main>
+    <!-- pinned action or tab bar, clear of the home indicator (34 px) -->
+  </div>
+  <!-- Lucide icons: <i data-lucide="house"></i> — size them in CSS (width/height on .lucide or the i) -->
+  <script src="https://cdn.jsdelivr.net/npm/lucide@1/dist/umd/lucide.min.js"></script>
+  <script>lucide.createIcons();</script>
+  <script src="../../assets/phone.js"></script>
+</body>
+</html>

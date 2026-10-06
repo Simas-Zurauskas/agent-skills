@@ -1,0 +1,159 @@
+/* mood-board-creator — the round page's own chrome (standalone target). Boards and screens bring their own styles;
+   this file only lays the round out: header + round tabs, the cover, one section per variant (its board above a row
+   of phones at true device size), and compare strips (one screen across every variant at ~55 %).
+   Sizes: a screen is 390 × 844; the bezel adds 6 px a side → a device is 402 wide; three devices + two 40 px gaps =
+   1286 px, which is every board's width, so a board sits exactly above its phones. */
+
+:root {
+  --mb-bg: #f3f4f6;
+  --mb-surface: #ffffff;
+  --mb-line: #e5e7eb;
+  --mb-line-strong: #d1d5db;
+  --mb-text: #111827;
+  --mb-muted: #6b7280;
+  --mb-strong: #111827;
+  --mb-on-strong: #ffffff;
+  --mb-bezel: #1f2937;
+  --mb-shadow: rgb(0 0 0 / 0.22);
+  --mb-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --mb-bg: #0f1115;
+    --mb-surface: #181b21;
+    --mb-line: #2a2f38;
+    --mb-line-strong: #3a404b;
+    --mb-text: #e8eaed;
+    --mb-muted: #9aa1ad;
+    --mb-strong: #e8eaed;
+    --mb-on-strong: #111318;
+    --mb-bezel: #3b414c;
+    --mb-shadow: rgb(0 0 0 / 0.6);
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body.mb-page {
+  margin: 0;
+  background: var(--mb-bg);
+  color: var(--mb-text);
+  font-family: var(--mb-font);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- header: project + round tabs ---- */
+.mb-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--mb-line);
+  background: var(--mb-surface);
+}
+.mb-header h1 { margin: 0; font-size: 18px; line-height: 28px; font-weight: 700; }
+.mb-tabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--mb-line-strong);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.mb-tabs a { padding: 3px 10px; border-radius: 999px; color: var(--mb-muted); text-decoration: none; white-space: nowrap; }
+.mb-tabs a:hover { color: var(--mb-text); }
+.mb-tabs a[aria-current="page"] { background: var(--mb-strong); color: var(--mb-on-strong); }
+.mb-tabs a:focus-visible { outline: 2px solid #3b82f6; outline-offset: 1px; }
+
+/* ---- the round ---- */
+.mb-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 120px;
+  padding: 48px 40px 160px;
+  container: mb / inline-size;
+}
+.mb-section { scroll-margin-top: 72px; }
+.mb-fit { display: flex; flex-direction: column; align-items: flex-start; gap: 72px; }
+@container mb (width < 1370px) { .mb-fit { zoom: 0.86; } }
+@container mb (width < 1190px) { .mb-fit { zoom: 0.72; } }
+@container mb (width < 1000px) { .mb-fit { zoom: 0.6; } }
+
+.mb-board { position: relative; flex: none; box-shadow: 0 24px 48px -16px var(--mb-shadow); }
+
+.mb-row { display: flex; align-items: flex-start; gap: 40px; }
+
+.mb-phone { position: relative; margin: 0; }
+.mb-phone > figcaption {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  width: 100%;
+  padding-bottom: 8px;
+  overflow: hidden;
+  color: var(--mb-muted);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mb-phone > figcaption a { color: inherit; text-decoration: none; }
+.mb-phone > figcaption a:hover { color: var(--mb-text); text-decoration: underline; }
+.mb-frame {
+  box-sizing: content-box;
+  width: 390px;
+  height: 844px;
+  overflow: hidden;
+  border: 6px solid var(--mb-bezel);
+  border-radius: 46px;
+  background: #fff;
+  box-shadow: 0 24px 48px -16px var(--mb-shadow);
+}
+.mb-frame > iframe { display: block; width: 390px; height: 844px; border: 0; }
+
+/* ---- compare strips ---- */
+.mb-title { margin: 0 0 12px; font-size: 22px; line-height: 28px; font-weight: 700; }
+.mb-title + p { max-width: 72ch; margin: 0 0 32px; color: var(--mb-muted); font-size: 14px; line-height: 20px; }
+.mb-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 96px 24px;
+  width: calc(5 * 402px + 4 * 24px);
+  padding-top: 40px;
+  zoom: 0.55;
+}
+.mb-grid .mb-phone > figcaption { font-size: 22px; line-height: 32px; }
+@container mb (width >= 1370px) { .mb-grid { zoom: 0.6; } }
+@container mb (width < 1190px) { .mb-grid { zoom: 0.5; } }
+@container mb (width < 1000px) { .mb-grid { zoom: 0.42; } }
+
+
+/* ---- the round's cover (round-RR/cover.html): deliberately plain, the variants carry the character ---- */
+.mb-cover { width: 1286px; padding: 48px 56px 56px; border-radius: 28px; background: #fff; color: #15171a; font: 15px/23px var(--mb-font); }
+.mb-cover-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 48px; padding-bottom: 40px; border-bottom: 1px solid #e4e5e7; }
+.mb-cover-kicker { margin: 0; color: #5d6167; font-size: 15px; font-weight: 500; }
+.mb-cover h2 { margin: 8px 0 0; font-size: 72px; line-height: 76px; font-weight: 700; letter-spacing: -0.03em; }
+.mb-cover-lede { max-width: 440px; margin: 0 0 8px; color: #3d4147; font-size: 17px; line-height: 26px; }
+.mb-cover-groups { display: grid; grid-template-columns: repeat(var(--mb-groups, 3), 1fr); gap: 40px; margin-top: 40px; }
+.mb-cover h3 { margin: 0; font-size: 15px; font-weight: 600; }
+.mb-cover-groups p { margin: 4px 0 0; color: #5d6167; font-size: 14px; line-height: 20px; }
+.mb-cover ul, .mb-cover ol { margin: 16px 0 0; padding-left: 20px; color: #3d4147; }
+.mb-cover-groups ul { display: flex; flex-direction: column; gap: 16px; padding: 0; list-style: none; }
+.mb-cover-groups li a { color: #15171a; font-weight: 600; text-decoration: underline; text-decoration-color: #c9cbcf; text-underline-offset: 4px; }
+.mb-cover-groups li a:hover { text-decoration-color: #15171a; }
+.mb-cover-foot { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 48px; padding-top: 40px; border-top: 1px solid #e4e5e7; }
+.mb-cover-foot li + li { margin-top: 8px; }
+.mb-cover-foot a { color: #15171a; font-weight: 500; }
+.mb-cover-matrix { width: 100%; margin-top: 40px; border-collapse: collapse; font-size: 14px; line-height: 20px; }
+.mb-cover-matrix th { padding: 8px 12px 8px 0; border-bottom: 1px solid #e4e5e7; color: #5d6167; font-weight: 500; text-align: left; }
+.mb-cover-matrix td { padding: 8px 12px 8px 0; border-bottom: 1px solid #f0f1f2; color: #3d4147; }
+.mb-cover-matrix td a { color: #15171a; font-weight: 600; }

@@ -1,0 +1,48 @@
+<!-- The round's cover: what the round is for, every variant (linked to its section), how to read one, what feedback
+     we want. Plain on purpose. Styles: assets/moodboard.css (.mb-cover). Set --mb-groups to the number of groups. -->
+<div class="mb-board mb-cover" style="--mb-groups: 3">
+  <div class="mb-cover-head">
+    <div>
+      <p class="mb-cover-kicker">{Project} · UI explorations · {date}</p>
+      <h2>Round {R}: {N} directions</h2>
+    </div>
+    <p class="mb-cover-lede">{Pick a visual language, or narrow to two or three worth pushing. Every variant shows the same screens with the same content. Only the look changes.}</p>
+  </div>
+  <div class="mb-cover-groups">
+    <section>
+      <h3>{Group label}</h3>
+      <p>{One line on what the group borrows}</p>
+      <ul>
+        <li><a href="#r{R}-v01">V01 {Name}</a><br>{One line: the bet}</li>
+      </ul>
+    </section>
+  </div>
+  <!-- The spread, condensed from the brief's diversity matrix: one row per variant, 4–6 axes that differ most. -->
+  <table class="mb-cover-matrix">
+    <thead><tr><th>Variant</th><th>{Axis: luminance}</th><th>{Axis: display type}</th><th>{Axis: signature}</th><th>{Axis: peak mode}</th></tr></thead>
+    <tbody>
+      <tr><td><a href="#r{R}-v01">V01 {Name}</a></td><td>{dark}</td><td>{condensed inline}</td><td>{…}</td><td>{quiet}</td></tr>
+    </tbody>
+  </table>
+  <div class="mb-cover-foot">
+    <section>
+      <h3>How to read a variant</h3>
+      <ol>
+        <li>Read the board's first line. That's the bet it makes.</li>
+        <li>Find the signature. It's one idea, and it lands on the key number or moment.</li>
+        <li>Squint at the screens: where does your eye land first on each?</li>
+        <li>Read the trade-offs at the bottom of the board.</li>
+      </ol>
+    </section>
+    <section>
+      <h3>What we want from you</h3>
+      <ul>
+        <li>Keep, push or kill for each variant. Push means you like the idea but not this execution.</li>
+        <li>One thing to steal, even from a variant you'd kill.</li>
+        <li>{A context test: would you send its key screen to the people it's for?}</li>
+        <li>Across the round, the best version of each screen. They can come from different variants.</li>
+      </ul>
+      <p>Compare one screen across all: <a href="#compare-{screen-1}">{Screen 1}</a>, <a href="#compare-{screen-2}">{Screen 2}</a>.</p>
+    </section>
+  </div>
+</div>

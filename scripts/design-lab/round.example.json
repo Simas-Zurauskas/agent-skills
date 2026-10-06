@@ -1,0 +1,48 @@
+{
+  "lab": "/abs/path/to/the/lab",
+  "round": 1,
+  "variants": {
+    "01": "Specials board",
+    "02": "Box lid",
+    "03": "Tally card",
+    "04": "Team sheet",
+    "05": "Floodlights",
+    "06": "Flash",
+    "07": "Forty columns",
+    "08": "Show card",
+    "09": "Hallway board",
+    "10": "Deep end"
+  },
+  "screens": [
+    [
+      "1",
+      "Home",
+      "compare-home"
+    ],
+    [
+      "2",
+      "The push-up war",
+      "compare-room"
+    ],
+    [
+      "3",
+      "Finish line",
+      "compare-finish"
+    ]
+  ],
+  "cover": "explorations/parts/r1-cover.html",
+  "flow": [
+    [
+      "1",
+      "2"
+    ],
+    [
+      "2",
+      "3"
+    ],
+    [
+      "3",
+      "1"
+    ]
+  ]
+}
