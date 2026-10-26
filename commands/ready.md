@@ -46,7 +46,8 @@ accepted are fixed in place; on text from the owner's words or an applied answer
 **If D4 wrote anything into `FEATURE.md`** (a fix, a default, a product fact's line) — the usual case, since the
 run closes most of what the dry run and red team find itself — that text has not been attacked: run the delta
 grill (2 passes) over it and dispose its findings; repeat while a round still writes, **at most twice more**.
-A round that writes a question, or a third round that still writes, makes the verdict *not ready*.
+A round that writes a question, or a third round that still writes, makes the verdict *not ready* — and ends the
+re-grill rounds there: the next `ready` re-attacks everything anyway.
 
 ## D5 — The verdict
 

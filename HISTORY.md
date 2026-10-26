@@ -150,3 +150,12 @@ simulation's init had written 11 questions for a one-surface feature, most of th
 - The reply leads with *Decided for you* (vetoable with "drop D3" or "D3: <your call>").
 - Deliberately unchanged from blueprint: the sourced / default / gap model, labels and ledger, blind routing,
   cold reads, delegated answers with their review window, the independent checks.
+
+## v6 — 2026-10-27
+
+The third simulation (v5) reached `ready` for the first time. `init`: 1 question (the owner's own words
+conflicting), 25 decided calls. After the owner's answer, `ready`'s dry-run builder and red team found a
+default that could not be built (corrected), a default that quietly contradicted the owner's own sentence
+(became the one question), and a wrong menu placement (corrected) — the gate doing what it is for. The run
+skipped further re-grill rounds once a question had been written; that is now the rule. Costs measured:
+`init` ≈ $28 / 37 min, `resolve` + `ready` ≈ $27 / 37 min on a one-surface feature (Opus).
