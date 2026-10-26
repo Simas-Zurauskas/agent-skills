@@ -89,3 +89,30 @@ feature (favourite challenges, Repperoni) found ~110 issues. The ones that chang
 - `bf.py` v2: logical (wrapped) lines, nested markers, malformed headings, ranges, struck facts, released-ref
   checks, lock codes and `--self`, `--count`, vetoes, snapshots, `hash --text`, pruned quote search.
 - Dropped `resolve soft` (an owner who prefers to veto does not need three soft modes).
+
+## v3 — 2026-10-26
+
+A second cold executor review, of v2 (42 findings, 6 blockers). The ones that changed behaviour:
+
+- **The questions for a run's own markers were only gathered by a standalone `questions` run**, so `init`,
+  `add`, `resolve`, `ready` and `auto` left their own markers (and contradictions) with no question row —
+  `auto` could end with markers and nothing for the owner to answer. The gathering now opens G3, which every
+  command runs.
+- **Provenance lines quote old text**, which often held the marker or default being replaced; `bf.py` read
+  them as live, so a feature could never reach Ready. It now ignores everything inside a provenance line.
+- **The lock**: headers with a mode (`init soft`, `auto 3`) were unparsed; "closed as abandoned" now lives in
+  the closing run's own entry (the log is append-only) and names the run id; commands inside `auto` take no
+  lock and close nothing — v2's text would have released `auto`'s lock mid-loop.
+- **The released ref is the remote-tracking ref** — in this workspace local `main` was 209 commits behind
+  `origin/main`, which would have marked every fact unreleased. `bf.py` warns when a local ref lags.
+- **Ready refuses `Not covered yet.` blocks and a missing compatibility table.**
+- **`unverified` can be cleared**: the next run with an agent re-runs the missing check.
+- **Blindness is enforced by the scope line**: agents never open a home's `work/` or `record/` unless the
+  brief names the file; quotes are checked against the file the filter names, never `work/` or snapshots.
+- **The router could not produce `keeps today's behaviour` and did not know its limit** — added to router
+  and grill briefs.
+- Owner fields: the status moves commands define are named as the one exception; an `Open` row the owner
+  filled in is never overwritten by `answer`; a standing delegation in memory never starts one.
+- `Depends on` field; `add` closes the rows its material settles; *ask it better* rows are not duplicates;
+  a vetoed KEEP default becomes a tombstone; `Added Fn` provenance; recheck clears via verified hashes;
+  `rowhash`; concrete model rule; an early-stopping `ready` closes its entry; `auto` snapshots per round.

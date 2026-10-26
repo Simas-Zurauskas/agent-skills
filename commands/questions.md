@@ -12,23 +12,31 @@ SKILL.md's checks; open the entry; save the invocation; record what the owner sa
 
 - **The owner's edits:** `bf.py changed <home>` — their edits to `FEATURE.md`, `questions.md` or
   `baseline.md` since the last run are theirs: kept, named in the report, and added to the attack surface.
-- **Question rows:** `Open → Answered` with an answer — theirs, left for `resolve`. `Answered` with an empty
+- **Question rows:** `Open → Answered` with an answer — theirs, left for `resolve`. An `Open` row whose
+  `Answer & why` they filled in without changing the status — name it in the reply (*"you answered q-3 but left
+  it Open — say `resolve` and I'll take it as answered"*); no command overwrites it. `Answered` with an empty
   answer — report, leave. `Open → Rejected` — read the reason (record.md §5). `Rejected` with a reason that
   reads like a decision — name it in the reply (*"q-6 reads like an answer — move it to Answered if it is
   one"*), never flip it. An `Open` row whose wording they edited — their wording is the question.
 - **Baseline drift:** `bf.py anchors <home>`. Stale facts that the lines under attack cite are re-verified
   (one verifier dispatch) before the grill reads them.
+- **Unverified items:** when an agent is available now, re-run the check each `unverified` item missed —
+  the verifier for facts, a router for defaults/fixes/slots, a cold reader for rows, a checker for applied
+  deltas — in the same waves as this run's own checks; a clean verdict removes the tag.
 
 ## G2 — Grill
 
 Pick the scale and compute the attack surface (grill.md §1). Nothing changed and not `full` → no passes; say
 *"nothing has changed since the last grill"* and go to G6. Otherwise a cost line, a heartbeat, and the passes
-concurrently ([../briefs/grill-pass.md](../briefs/grill-pass.md), lenses pasted in). Add as candidates of
-their own: every marker ending `→ asked next run` (vetoed ones keep their tag) · every recorded contradiction
-not yet asked · every `CH`/`KEEP`/default citing a fact found wrong. `grill` log line: scale, passes, what
-was attacked, candidates per pass.
+concurrently ([../briefs/grill-pass.md](../briefs/grill-pass.md), lenses pasted in). `grill` log line: scale,
+passes, what was attacked, candidates per pass.
 
 ## G3 — Merge, deduplicate, filter
+
+**Inputs — every command that runs G3–G6 gathers all of these, grill or no grill:** the grill's candidates
+(if a grill ran) · **every marker ending `→ asked next run`** (vetoed ones keep their tag) · every recorded
+contradiction not yet asked (`work/<run-id>/contradictions.md` and earlier runs' reports) · every `CH`, `KEEP`
+or default citing a fact found wrong · the dry run's and red team's findings (`ready`).
 
 dispositions.md §1–§2, including the reverse sweep of standing `Open` rows. Verify every quote and anchor a
 candidate, survey or filter relies on (`bf.py quote`, `bf.py anchors --facts`) — **a failed match voids the

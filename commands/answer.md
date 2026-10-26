@@ -8,16 +8,16 @@ live invocation by the owner starts it ([../reference/rules.md](../reference/rul
 ## W1 — Load
 
 SKILL.md's checks; open the entry; save the invocation; record chat answers first — the owner's words win
-over anything drafted. Queue every `Open` row, **except** a row this command left before whose text and
-touched lines are unchanged since (its `left` log line carries `bf.py hash --text` of the row and those
-lines) — unless the owner asks to try again.
+over anything drafted. Queue every `Open` row, **except**: a row whose `Answer & why` the owner already filled in (name it in the
+reply — it is theirs, never overwritten); and a row this command left before whose `bf.py rowhash <home> q-NN`
+matches the hash on its `left` line (nothing it rests on has changed) — unless the owner asks to try again.
 
 ## W2 — Triage, mechanical, no agent
 
 Leave a row now, with its reason, when:
 - a **hard limit** applies (§4);
-- **it depends on another row still `Open`** — unless that row was answered by the owner in this same
-  invocation, in which case it is drafted in a second wave after the first is recorded;
+- **it depends on another row still `Open`** (its `Depends on` field) — unless that row was answered by the
+  owner in this same invocation, in which case it is drafted in a second wave after the first is recorded;
 - **it arose from a delegated answer** — its `Why asked` cites a line whose provenance says *delegated*
   (*built on an answer I gave for you — yours to decide*);
 - **the owner answered the same decision before** and a later row reopened it;
@@ -56,13 +56,14 @@ grounded reason is not a leave: the answer is written and the doubt is reported 
    doubt if any · `bf.py hash --text` of the answer as written (a later edit by the owner is theirs).
 4. Nothing else — no `FEATURE.md` change, no marker removed; `resolve` applies.
 
-Left rows are not touched; one `left` line each with the reason and the row hash.
+Left rows are not touched; one `left` line each with the reason and `bf.py rowhash`.
 
 ## W6 — Report and close
 
 Reply: how many answered and on which grounds; **the owner's-list ones first** (§3), one line each —
 `q-04 — <decision> (your note says …)`; the rows left and why; *"say "q-4: …" to overrule any of these, or
-`resolve` to write them in."* Report, snapshot, `closed`.
+`resolve` to write them in."* **Standalone only:** report, snapshot, `closed` (inside `auto`, the outer run
+does these).
 
 ---
 

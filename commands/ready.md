@@ -14,6 +14,9 @@ SKILL.md's checks; open the entry; save the invocation; record chat answers. `bf
 - `Open` or `Flagged` rows, or markers → **not ready**: list them and stop — the checks below would only find
   what is already known.
 
+Stopping here appends `- closed <time> — not ready: <reason>` to the entry, so the next command is not locked
+out.
+
 ## D2 — Re-verify the product
 
 `bf.py anchors <home>`. Every **stale** fact, every fact marked **recheck**, and a search for new code that
@@ -50,11 +53,13 @@ or writes a question, the verdict is *not ready*.
 (`bf.py counts`), no stale facts, and `bf.py lint` reports no errors and no coverage gaps. Then write the
 status line:
 
-- `Status: Ready for planning — 2026-10-27 · rep-app c41d0e2 (dev) · checked by grill, dry-run builder, red team, faithfulness`
+- `Status: Ready for planning — 2026-10-27 · rep-app c41d0e2 (dev)`
 - or, when delegated answers or defaults were adopted since the owner last accepted:
-  `Status: Ready for planning — pending your review: 6 answers I gave for you, 4 defaults — 2026-10-27 · …`
+  `Status: Ready for planning — pending your review: 6 answers I gave for you, 4 defaults — 2026-10-27 · rep-app c41d0e2 (dev)`
 
-Log `ready`, snapshot, `closed`. **Not ready** otherwise: the status stays `Draft`, and the reply lists what
+The checks that ran are named in the log's `ready` line, not in the spec.
+
+Log `ready`; **standalone only:** snapshot, `closed`. **Not ready** otherwise: the status stays `Draft`, and the reply lists what
 is left — the new questions first.
 
 **Reply on Ready:** the verdict line; what the feature contains (counts); **everything decided on the owner's

@@ -8,13 +8,15 @@ From the workspace the command was run in, in this order:
    folder) gets `blueprint-feature/` inside it. Create only that leaf.
 2. **Existing homes:** `find . -maxdepth 7 -path '*/blueprint-feature/FEATURE.md' -not -path
    '*/node_modules/*'`. For commands other than `init`: exactly one → it; several → list them (name,
-   status, path) and ask which, once. For `init`: reuse an existing home only when the owner named its task
-   or folder; otherwise a new feature gets a new home.
+   status, path) and ask which, once. For `init`: reuse an existing home when the owner named its task or folder, or when its last log
+   entry is a **paused `init`** (resume it — §4); otherwise a new feature gets a new home.
 3. **`init` — the workspace's task convention.** Read the agent guides for where task folders live (e.g.
    *"each task's working folder is `wiki-rep/tasks/<nnn>-<short-name>/`"*). If the owner named a task
    (*"task 017"*), use that folder. Otherwise create the next free number with a 2–4 word kebab-case slug,
    following the convention, and **say the path in the reply**. Write nothing in the task folder outside
-   `blueprint-feature/`.
+   `blueprint-feature/` — what the convention asks of the task itself (a `NOTES.md`, a `qa/` folder) is the
+   task owner's, not this skill's. A home inside the wiki's task folder is not a wiki write: the skill never
+   edits wiki pages.
 4. **No convention:** `blueprint-features/<slug>/blueprint-feature/` at the workspace root; say so.
 
 **Can it write?** Probe with a real write, not permission bits — `f=$(mktemp "<dir>/.bf-probe.XXXXXX") &&
@@ -31,7 +33,7 @@ never overwrites).
 | `FEATURE.md` | The feature PRD | yes |
 | `questions.md` | Every question row, `q-NN` order, never re-sorted | yes |
 | `baseline.md` | Product facts, `B-n` | yes |
-| `sources/INDEX.md` + `sources/NNN-<slug>.<ext>` | Each source verbatim: the owner's words as typed, files copied in, with date and sha256 (`bf.py hash`). A revision is a new number, never an overwrite | yes |
+| `sources/INDEX.md` + `sources/NNN-<slug>.<ext>` | Each source verbatim: the owner's words as typed, files copied in. `INDEX.md` columns: # · file · what it is · where it came from · captured (date) · sha256-12 (`bf.py hash`). A revision is a new number, never an overwrite | yes |
 | `record/log.md` | Append-only run log (§3) | yes |
 | `record/defaults.md` | The ledger of every `Dn`, `Fn`, `Sn` (dispositions.md) | yes |
 | `record/runs/<run-id>.md` | Each run's full report (§6) | yes |
@@ -78,13 +80,15 @@ paragraphs; explanations go in the run report.
 
 ## 4. The lock
 
-`bf.py lock <home> [--self <run-id>]`: exit **0** — no open run (or no home yet); **1** — an open entry that
-is abandoned (not the newest entry, or no log write for 30 minutes): append `- note closed as abandoned by
-<run-id>` and `- paused` to it, say so, proceed; **3** — another run is writing: halt with one plain line,
-unless the owner says that session stopped. A command embedded in another (`auto` running `answer`) passes
-`--self` with the outer run's id, or shares the outer run's entry.
+`bf.py lock <home>`: exit **0** — no open run (or no home yet); **1** — an open entry that is abandoned (not
+the newest entry, or no log write for 30 minutes): after opening this run's own entry, add the line
+`- note closed as abandoned: <its run id>` to it — the log stays append-only and `bf.py` treats that run as
+closed — say so, proceed; **3** — another run is writing: halt with one plain line, unless the owner says that
+session stopped. **Commands embedded in `auto` (or `ready` calling the questions tail) do not take the lock,
+open entries or close them** — they run inside the outer run's entry.
 
-**A paused `init`** (waiting on the interview or on `init soft`'s review) is not abandoned: the next
+**A paused `init`** (waiting on the interview or on `init soft`'s review — it takes a snapshot before pausing,
+so the owner's edits to the draft are seen) is not abandoned: the next
 invocation in that home that answers it **resumes** the `init` — a reply to the interview continues at I2,
 a reply to the draft review continues at I4 — in a new entry that names the paused one.
 
@@ -99,9 +103,11 @@ At the start of any command, save the owner's message to `work/<run-id>/invocati
 | *"close q-2"* | `Closed`, `- **Closed:** <date> — owner, in chat` |
 | *"drop D3"*, *"undo F2"*, *"drop S1"* | The default/slot is removed, or the fix reverted to its quoted old text; the gap becomes a marker `→ asked next run (vetoed D3)`; `bf.py ids --veto D3`; the ledger line gains `· vetoed <date> — "<their words>"`; one `vetoed` line |
 | *"q-4 is wrong — …"* about an applied answer | A new answer on that row: Status → `Answered`; `resolve` rewrites the lines it wrote ([rules.md](rules.md) §1) |
-| *"accept"* / *"looks good"* after a `ready` that is pending review | The pending-review clause is removed from the Ready stamp; one `ready` line naming what was accepted |
+| *"accept"* / *"looks good"* after a `ready` that is pending review | Recorded by any write command (and only after reading it back from the saved message): the status line's pending-review clause is removed — **the one write to `FEATURE.md` that does not reset the status to Draft** — with one `ready` line naming what was accepted |
 
 Words that are not clearly one of these are not recorded; the reply says which ones it did not apply.
+`status` records nothing: answers given with it are named in its reply as *not recorded — say them with any
+other command*.
 
 ## 6. The run report — `record/runs/<run-id>.md`
 

@@ -16,7 +16,7 @@ Progress: one plain line at each phase boundary — *"Mapping the parts of the a
 4. **Capture sources** into `sources/`: the owner's words exactly as typed (`001-request.md`), each file they
    named, the task folder's brief or notes if they pointed at the task, a design they named (path, commit,
    the frames they mean — copy screenshots, not whole apps). `INDEX.md`: number, what, from where, date,
-   sha256. One `source` line each.
+   sha256-12 (record.md §2 has the columns). One `source` line each.
 5. **Too little to go on?** If the request does not say what the feature does for whom, ask **one message,
    at most three questions** — *what should it do, and what should it not do? · who is it for, and what are
    they trying to get done? · anything already decided, or anything it must not change?* — log
@@ -58,7 +58,8 @@ Draft every block of the template by [../reference/feature-shape.md](../referenc
   may split them; a run never splits on its own.
 - Write `FEATURE.md` (one write, read back); `item` lines at depth 1; `bf.py ids <home> --sync`.
 
-**`init soft`:** print the Summary, Scope and the list of requirements, changes and keeps; log
+**`init soft`:** print the Summary, Scope and the list of requirements, changes and keeps;
+`bf.py snapshot <home> --run <id>` (so their edits to the draft are seen); log
 `paused — awaiting the owner's look at the draft`; stop. Their reply is a source, applied as `add` would
 apply it, and the run continues at I4.
 

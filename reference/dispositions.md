@@ -21,7 +21,8 @@ check's verdict. Briefs that need the standing defaults read it.
 
 - Merge this run's candidates that ask the same decision into one, keeping every grounding and lens; two
   different decisions on one entity stay two.
-- Compare against **every** question row in any status: a match must quote the row.
+- Compare against **every** question row in any status — except rows rejected as *ask it better*, which a
+  new draft replaces: a match must quote the row.
 - Compare against earlier runs' discards (the reports in `record/runs/`): a match is discarded **on the
   original filter, re-tested now with fresh evidence** — never on the bare fact that it was discarded
   before.
@@ -78,11 +79,14 @@ other dispositions.
 
 ## 4. The blind router — a second agent re-derives every disposition
 
-**Before dispatch, the never-list scan (mechanical, on each candidate's `gap` and `two_answers`):** money
-words (price, fee, pay, refund, charge, subscription), legal or standards names, minors or ages, a date,
-deadline, window or duration, wording, a change to what users see or do today, a new notification,
-permission, state or channel, who sees something new, and every *Always ask* topic. Hits travel with the
-candidate.
+**Before dispatch, the never-list scan (mechanical, case-insensitive, on each candidate's `gap` and
+`two_answers`).** A hit is any of: *price, fee, pay, paid, refund, charge, subscription, cost* · *law, legal,
+regulation, GDPR, compliance, store policy, terms* · *child, minor, age, under 1* · *day, days, week, hour,
+minute, deadline, window, expire, after N, until, retention, keep for, delete after* · *wording, text, label,
+copy, message says, call it* · *today, currently, instead of, no longer, change how, replace* · *notify,
+notification, push, email, badge* · *permission, allow, role, admin, who can* · *visible, see, shown to,
+share, public, private* · *offline, queue, sync, new state* · every *Always ask* topic's words. Hits travel
+with the candidate; a hit is a reason for the router to look twice, not a verdict.
 
 Brief: [../briefs/router.md](../briefs/router.md). **At most 15 candidates per router**, routers concurrent.
 Each candidate goes with its grounding, `two_answers` and never-list hits — **never with the first routing**.
@@ -132,6 +136,8 @@ The router reads the code to check PRODUCT claims and returns its own outcome an
   [../commands/answer.md](../commands/answer.md) §3. **Kept only if the cold reader, judging blind, picks
   the same direction**; otherwise the line is removed. Never on a contradiction.
 - **Touches** — the IDs it decides, or `feature`.
+- **Depends on** — `q-NN` when its answer cannot be given until another row is answered (the *consequence of an
+  open question* case where the gap is still worth writing now); omit otherwise.
 
 **Two mechanical gates on the draft:**
 - **Read-back:** if `Why asked` says the owner cannot decide it (*"depends on the store's rules"*), reword it
@@ -159,7 +165,8 @@ Per row it also returns **`directions`** (`ok`, or the missing option / wrong co
 evidenced) and **`would_pick`** (which direction it would choose and why) — the Recommended line stays only
 when this matches.
 
-Contradictions and *Always ask* topics take only `stands`, `simplify` or `extend`. With no reader available,
+An `irrelevant` verdict must name its filter (`filter`). Contradictions and *Always ask* topics take only
+`stands`, `simplify` or `extend`. With no reader available,
 rows are written with `- **Unverified:** yes` and no Recommended line.
 
 ## 7. Writing
@@ -170,7 +177,18 @@ rows are written with `- **Unverified:** yes` and no Recommended line.
 - Writing a row and pointing its marker at it are one act.
 - Defaults, fixes and slots are **adopted on write** — labelled, ledgered, listed in the reply, each
   vetoable at any later run (*"drop D3"*, *"undo F2"*, *"drop S1"*). A veto restores the gap as a marker
-  ending `(vetoed D3)` and records the veto in `ids.json` (`bf.py ids --veto D3`).
+  ending `(vetoed D3)` and records the veto in `ids.json` (`bf.py ids --veto D3`). **A vetoed `KEEP` default**
+  becomes a tombstone (`- KEEP-3 — withdrawn <date> (vetoed D4).`) with the marker on the next line — IDs are
+  never deleted.
+- **Candidate ids:** each pass prefixes its own letter (`A1`, `B4`); a merged candidate keeps its first id;
+  drafted question rows are `C1…` until `q-NN` numbers are assigned at write.
+- **Quotes are checked against the file the filter names**: `bf.py quote --text="…" <home>/FEATURE.md`
+  (already answered, fixes), `<home>/questions.md` (duplicate, consequence), `<home>/record/defaults.md`
+  (a default), `<home>/sources` (source spans) — never against `work/` or `record/snapshots/`.
+- **Anchors from agent returns** are written into a file in the baseline §3 line form
+  (`` `repo/path:line` «snippet» ``) and checked with `bf.py anchors <home> --facts <that file>`.
+- **What G4 writes is not attack surface for the next delta grill** — it was routed blind already; only
+  `ready` re-grills what its own disposal wrote.
 - **Sanity range, not a quota.** A first `init` usually writes 4–15 questions. Above `max(15, 2 × parts)`,
   re-gate the batch once (some channel leaked); never discard for count, and say so if it stays high.
 - **Funnel** in the log and report: candidates → product → fix → default → slot → questions → discarded.

@@ -10,7 +10,7 @@ it, a reader trying to break one thing finds it — and each candidate says whic
 |---|---|---|
 | **Delta** | `add`, `resolve`, bare `questions` | **2** — A: lenses 1 + 2 over the changed text · B: lenses 3 + 4 over the changed text against the baseline. Sweeps only as far as the changed text touches them. Nothing changed → no passes |
 | **Full** | `init`, `questions full`, `ready` | **4** — 1: lenses 1 + 2 over every line · 2: lens 3 · 3: lens 4 · 4: lens 5 + the sweeps (§3) |
-| **Full, small change** | as Full, when the feature has one `Behaviour` part and at most ~5 requirements | **2** — A: lenses 1 + 2 · B: lenses 3, 4, 5 + sweeps — each lens still worked separately inside its pass |
+| **Full, small change** | as Full, for a **small change** — the one definition: the request names one surface, and the draft has one `Behaviour` part and at most ~5 requirements | **2** — A: lenses 1 + 2 · B: lenses 3, 4, 5 + sweeps — each lens still worked separately inside its pass |
 
 **Changed text** = the lines the `item` log lines since the last `grill` line name, **plus the owner's
 edits since the last run** (`bf.py changed`), plus every line naming a record, surface or actor those lines

@@ -32,8 +32,10 @@ Repos (…):
 - wiki-rep 6966213 (main)
 ```
 
-`released:` names the ref users have (the release branch or tag the workspace guides name; ask nothing —
-if no guide says, use the default branch and say so). `bf.py anchors` checks each fact's snippet against
+`released:` names the ref users have — **the remote-tracking ref** of the release branch the guides name
+(`git rev-parse --abbrev-ref main@{upstream}` → `origin/main`), never a local branch that may be stale; with no
+guide, the remote's default branch. A run never fetches: `bf.py anchors` says how old the ref is and warns when
+a local ref lags its upstream. `bf.py anchors` checks each fact's snippet against
 that ref too: a fact true on the checked-out code but absent from the released ref is marked
 `(unreleased — not in main)` at the end of its line. A `CH` line built on an unreleased fact says so in its
 *Today* half, because users have never seen that behaviour. Uncommitted work in the checkout is noted in the
@@ -80,7 +82,8 @@ run report.
    their `baseline.md` for this feature's anchored paths) — two features in flight on one surface.
 9. **Not present today** — searched absences.
 10. **Drift noticed** — where the wiki, a doc or a guide disagrees with the code (or points at a frozen
-    PRD), with the exact correction, for whoever maintains them. The skill never edits them.
+    PRD), with the exact correction, for whoever maintains them. The skill never edits them. Each item is
+    written once per home and re-reported only when it changes.
 
 ## 5. How it is built — cartographers, then a blind verifier
 
@@ -89,8 +92,8 @@ index, and the invariants and contracts pages. Write the project rules to `work/
 the request, list the surfaces, records and flows the feature plausibly touches and the words to search
 for.
 
-**Size the work.** A **small change** — the request names one surface and at most a few behaviours — gets
-one cartographer covering every area. Otherwise **2–4 cartographers**, concurrent
+**Size the work.** A **small change** ([grill.md](grill.md) §1 is the one definition) gets one cartographer
+covering every area. Otherwise **2–4 cartographers**, concurrent
 ([../briefs/cartographer.md](../briefs/cartographer.md)), split so their reading does not overlap:
 screens and flows · data and backend · cross-cutting (notifications, realtime and offline, sharing and
 links, older versions, other repos) · patterns and rules. Each returns facts, blast radius, patterns,
@@ -117,6 +120,8 @@ unsupported facts are dropped or re-derived once. Then write `baseline.md`.
   on a touched table): the verifier at `ready` searches for new writers and readers of the touched records
   since the recorded commit (`git log --since`, `git diff --name-only <commit>..HEAD`).
 
-After a verification, rewrite the header's repo lines to the current commits and update `FEATURE.md`'s
-`Product:` line. A fact found wrong is struck; every `CH`, `KEEP` or default citing it becomes a candidate
+After a verification, record the confirmed facts with `bf.py ids <home> --verified B-4,B-9` (their files' hashes —
+a *recheck* clears until the file changes again), rewrite the header's repo lines to the current commits, and
+update `FEATURE.md`'s `Product:` line. An `(unverified)` fact is re-sent to the verifier by the next run that has
+one available, and the tag removed on `confirmed`. A fact found wrong is struck; every `CH`, `KEEP` or default citing it becomes a candidate
 for the next grill.

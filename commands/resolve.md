@@ -70,4 +70,4 @@ under the answer, `flagged` line. Then `bf.py ids --sync`, regenerate `Open ques
 The delta grill (2 passes) over the lines this run wrote — the derivative round (grill.md §4 bounds its depth).
 Then [questions.md](questions.md) G3–G6. Reply: what was applied, one line per question naming the lines it
 changed (superseded lines old → new); what was flagged and why; new questions; next step (*`ready` when nothing
-is open*). Report, snapshot, `closed`.
+is open*). **Standalone only:** report, snapshot, `closed` (inside `auto`, the outer run does these).

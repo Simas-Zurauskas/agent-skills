@@ -26,7 +26,7 @@ this delta depends on go to the same verifier. Skip both when nothing new is tou
 | says something stays | a new `KEEP` |
 | contradicts a line in `FEATURE.md` | **default:** the line rewritten, `*(From your note of <date> — replaces: "<old>".)*`; a line that came from the owner's earlier words is listed first in the reply, old and new. **`soft`:** the line stays; a marker and a question with both texts |
 | explicitly drops something | a tombstone on each withdrawn line, and a `Not doing` line if they said why |
-| settles a marker | the answer written in, the marker removed (route 5) |
+| settles a marker | the answer written in, the marker removed (route 5), and its question row set `Closed` with `- **Closed:** <date> — settled by your note (sources/NNN)` |
 | hedges or defers | as [../reference/feature-shape.md](../reference/feature-shape.md) §2 says |
 | contradicts another source (not the document) | both quoted, a marker, a question |
 | is not about this feature | named in the reply, not written — a separate feature gets its own `init` |

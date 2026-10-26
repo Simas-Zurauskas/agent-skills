@@ -11,8 +11,9 @@ review* until the owner accepts what was decided for them.
 
 ## The loop
 
-`auto` opens one log entry and runs each command's phases inside it (embedded commands pass `--self` to the
-lock, and share the entry and the report). It records chat answers in the invocation first.
+`auto` takes the lock and opens one log entry; the commands it runs work inside that entry — they take no
+lock and open or close nothing ([../reference/record.md](../reference/record.md) §4) — and share one report. It
+records chat answers in the invocation first.
 
 1. **Round** (at most `rounds`, default 3):
    1. [answer.md](answer.md) over the `Open` rows (rows left before and unchanged are skipped).
@@ -22,7 +23,9 @@ lock, and share the entry and the report). It records chat answers in the invoca
 2. **`Flagged` rows stop the loop before `ready`**: they are the owner's, listed first in the reply.
 3. If no `Open`, `Answered` or `Flagged` row remains, run [ready.md](ready.md). If `ready` writes new
    questions, one more `answer` → `resolve` pass, then `ready` once more — never more than one such pass.
-4. Heartbeat `note round n` lines; one `closed` line at the end.
+4. After each round, `bf.py snapshot <home> --run <id>-r<n>` — so the next round's `bf.py changed` shows only
+   edits the owner made, never this loop's own writes. Heartbeat `note round n` lines; one report, one final
+   snapshot and one `closed` line at the end.
 
 ## The reply — one report for the whole loop
 

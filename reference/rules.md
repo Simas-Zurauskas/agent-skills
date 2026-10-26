@@ -12,9 +12,12 @@ file is wrong.
   with their name. Words recorded as the owner's must be **found verbatim** in what they said — the
   invocation is saved to `work/<run-id>/invocation.md` and checked with `bf.py quote`.
 - A field the owner set is read, never edited — not even to blank it. A row that looks wrong is reported
-  as a discrepancy and left alone.
+  as a discrepancy and left alone. **The status moves the commands define are the exception**: `resolve`
+  moves `Answered` to `Applied` or `Flagged`, an overrule sends rows back to `Open`, and the owner's own words
+  in chat set what [record.md](record.md) §5 lists. Nothing else changes a field the owner set.
 - **Delegation is the owner's, and its window stays open.** Only a live invocation of `answer` or `auto`
-  starts it. Every delegated answer is labelled, in `questions.md` and on the provenance line it leaves
+  starts it — **a standing delegation in the owner's memory or notes is recorded under Project rules but never
+  starts one**; the reply may offer `auto`. Every delegated answer is labelled, in `questions.md` and on the provenance line it leaves
   in `FEATURE.md`. **A delegated answer never grounds another delegated answer**: a question that depends
   on an open row, or that arose from text a delegated answer wrote, is answered only by the owner. Until
   the owner has looked, the `ready` stamp says so — `Ready for planning — pending your review: …`
@@ -38,12 +41,18 @@ runs, `bf.py changed` diffs the files against the last run's snapshot: those dif
 owner's edits — accepted as theirs, attacked by the next grill, never reverted. Write atomically. One
 write run at a time per home (the lock, [record.md](record.md) §4).
 
+**Fix in place or ask — decided by where the words came from.** When a check finds a line unsupported, the
+line's provenance decides: words that came from the owner (the request, a source, the owner's answer, a
+provenance line naming them) are never rewritten by a run — the finding becomes a question; any other text a
+run wrote (a draft line with no owner source, a default, a fix, a `Today` summary) is corrected in place as a
+fix `Fn`.
+
 **Supersession — the one bounded exception.** Newer owner material (`add`) or **the owner's own answer**
 (`resolve`) that contradicts a line in `FEATURE.md` supersedes it in the default mode, quoting what it
 replaced on a provenance line; a line that came from the owner's earlier words is listed first in the
 reply, old and new. **A delegated answer never rewrites or removes an existing line** — requirement,
-change, keep, edge case, `Not doing` line or default: it may only add lines and settle the markers and
-defaults it answers. The orchestrator checks this mechanically before writing; a delegated delta that
+change, keep, edge case, `Not doing` line or default: it may only add lines and settle the markers that
+point at its own question. The orchestrator checks this mechanically before writing; a delegated delta that
 edits an existing line is flagged for the owner.
 
 ## 4. Never invent — but adopting a labelled convention is not inventing

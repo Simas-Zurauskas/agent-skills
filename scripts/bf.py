@@ -9,7 +9,8 @@ Subcommands:
                                     verify code anchors by snippet; report repo drift and unreleased facts
   quote --text TEXT|- PATH...       normalised-whitespace match of a quotation in files or folders
   hash FILE | --text TEXT           sha256 (full and first 12)
-  ids <home> [--sync] [--next P [--count N]] [--veto ID]
+  ids <home> [--sync] [--next P [--count N]] [--veto ID] [--verified B-1,B-2]
+  rowhash <home> q-NN               hash of a question row plus the lines it touches (answer skips unchanged left rows)
                                     keep record/ids.json; next free FR/CH/KEEP/D/S/F/q/B numbers
   lock <home> [--self RUNID]        show an open run-log entry and its age
   snapshot <home> --run RUNID       copy FEATURE.md, questions.md, baseline.md into record/snapshots/RUNID/
@@ -48,7 +49,7 @@ BASELINE_HEADINGS = [
 STATUSES = {"Open", "Answered", "Applied", "Rejected", "Flagged", "Closed"}
 MACHINE_WORDS = re.compile(r"\b(cold read|disposition|run id|run-id|funnel|grill pass|blind check|"
                            r"asked next run|baseline fact|B-\d+ fact)\b", re.I)
-PRUNE = {".git", "node_modules", "dist", "build", ".expo", "Pods", ".next", ".turbo", "coverage", "__pycache__"}
+PRUNE = {"work", "snapshots", ".git", "node_modules", "dist", "build", ".expo", "Pods", ".next", ".turbo", "coverage", "__pycache__"}
 
 BULLET = r"^\s*(?:[-*]\s+|\d+\.\s+)?"
 ID_DEF = re.compile(BULLET + r"\**(FR|CH|KEEP)-(\d+)([a-z])?\**\s+[—–-]\s")
@@ -62,15 +63,18 @@ DEFAULT_OK = re.compile(
     r"adopted (\d{4}-\d{2}-\d{2})(, unverified)?\):")
 SLOT_DEF = re.compile(BULLET + r"(Copy|Content|Design) slot\b", re.I)
 SLOT_OK = re.compile(r"\b(Copy|Content|Design) slot S(\d+) —")
-FIX_REF = re.compile(r"\bCorrected F(\d+)\b")
+FIX_REF = re.compile(r"\b(?:Corrected|Added) F(\d+)\b")
+PROV = re.compile(r"\*\((?:From|Corrected|Added)\b.*?\)\*")
 Q_HEAD = re.compile(r"^###\s+q-(\d+)\s*·\s*(.+?)\s*$")
 FIELD = re.compile(r"^-\s+\*\*(.+?):\*\*\s*(.*)$")
 LATE_FIELDS = {"Applied", "Why flagged", "Unverified", "Closed"}
 ANCHOR = re.compile(r"`([A-Za-z0-9_.\-]+/[A-Za-z0-9_.\-/\[\]()@+]+|[A-Za-z0-9_.\-]+\.[A-Za-z0-9]+):(\d+)(?:-(\d+))?`"
                     r"(?:\s*«(.+?)»(?=\s|$|[,.;)]))?")
+ANCHOR_BARE = re.compile(r"(?<![`\w])([A-Za-z0-9_.\-]+/[A-Za-z0-9_.\-/\[\]()@+]+):(\d+)(?:-(\d+))?\s*«(.+?)»")
 STATUS_LINE = re.compile(r"^Status:\s*(.+)$", re.M)
 REPO_LINE = re.compile(r"^\s*(?:[-*]\s+)?([A-Za-z0-9_.\-]+)\s+([0-9a-f]{7,40})\s*\(([^)]+)\)(?:.*?released:\s*([^\s·,]+))?")
-ENTRY_HEAD = re.compile(r"^## (\d{4}-\d{2}-\d{2} \d{2}:\d{2}) · (\S+) · (\S+)")
+ENTRY_HEAD = re.compile(r"^## (\d{4}-\d{2}-\d{2} \d{2}:\d{2}) · (.+?) · ([0-9a-f]{6})\b")
+ABANDONED = re.compile(r"^-\s+note closed as abandoned:\s*([0-9a-f]{6})")
 
 
 def read(path):
@@ -100,9 +104,16 @@ def section(text, heading, level=2):
     return rest[: n.start()] if n else rest
 
 
-def logical_lines(text):
+def strip_prov(text):
+    """Provenance lines quote old text (markers, defaults); never parse them as live content."""
+    return PROV.sub("", text)
+
+
+def logical_lines(text, keep_prov=False):
     """Join wrapped continuation lines (indented, not a bullet, heading or blank) onto the line they continue."""
     out = []
+    if not keep_prov:
+        text = strip_prov(text)
     for i, line in enumerate(text.replace("’", "'").splitlines(), 1):
         cont = (line[:1] in (" ", "\t") and line.strip() and not re.match(r"^\s*([-*]\s|\d+\.\s|#)", line))
         if cont and out and out[-1][1].strip():
@@ -168,6 +179,7 @@ def feature_ids(text):
 
 def markers(text):
     """Find [NEEDS CLARIFICATION: …] allowing nested [..] and wrapped lines; stop at a blank line or heading."""
+    text = strip_prov(text)
     out = []
     for m in re.finditer(r"\[needs clarification:", text, re.I):
         depth, j, ok = 1, m.end(), False
@@ -301,8 +313,11 @@ def lint(home):
 
     dnums = []
     for i, line in logical_lines(ft):
-        if DEFAULT_DEF.match(line):
-            m = DEFAULT_OK.search(line)
+        labels = [mm.start() for mm in re.finditer(r"\bDefault (?:D-?\d+ )?\(", line)]
+        if DEFAULT_DEF.match(line) and not labels:
+            labels = [0]
+        for pos in labels:
+            m = DEFAULT_OK.match(line, pos) if pos else DEFAULT_OK.search(line)
             if not m:
                 E("FEATURE.md", i, "Default not in the shape 'Default D<n> (<ground> … — adopted <date>): …'")
             else:
@@ -380,6 +395,11 @@ def lint(home):
             problems.append(f"{unverified_count(d)} unverified items")
         if coverage:
             problems.append(f"{len(coverage)} coverage gaps")
+        nc = [h for h in FEATURE_HEADINGS if re.search(r"^\s*Not covered yet", section(ft, h) or "", re.M)]
+        if nc:
+            problems.append("blocks not covered yet: " + ", ".join(nc))
+        if dc.strip() and "|" not in dc and not re.search(r"^\s*None\b", dc, re.M):
+            problems.append("no compatibility table")
         if problems:
             E("FEATURE.md", 0, "Ready stamp with " + ", ".join(problems))
 
@@ -402,6 +422,12 @@ def lint(home):
             E("questions.md", r["line"], f"{r['id']} is {r['status']} with no answer")
         if r["status"] == "Applied" and not f.get("Applied"):
             W("questions.md", r["line"], f"{r['id']} is Applied with no '- **Applied:** <date>' field")
+        for dep in re.findall(r"q-\d+", f.get("Depends on", "")):
+            dep = f"q-{int(dep[2:]):02d}"
+            if dep not in qmap:
+                E("questions.md", r["line"], f"{r['id']} depends on {dep}, which does not exist")
+        if r["status"] == "Open" and r["answered"] and not r["delegated"]:
+            W("questions.md", r["line"], f"{r['id']} has an answer but is still Open — the owner may mean Answered")
         if r["status"] == "Flagged" and not f.get("Why flagged"):
             E("questions.md", r["line"], f"{r['id']} is Flagged with no 'Why flagged'")
         for t in re.findall(r"\b(?:FR|CH|KEEP)-\d+(?:\s*[–-]\s*(?:FR|CH|KEEP)-\d+)?", f.get("Touches", "")):
@@ -555,14 +581,17 @@ def check_anchors(home, texts, workspace=None, window=6, far=40):
             b = B_DEF.match(line)
             if b and "~~" in line:
                 continue
-            for m in ANCHOR.finditer(line):
+            ms = list(ANCHOR.finditer(line)) or list(ANCHOR_BARE.finditer(line))
+            for m in ms:
                 found.append({"in": f"{name}:{i}", "fact": f"B-{b.group(1)}" if b else None, "path": m.group(1),
                               "line": int(m.group(2)), "end": int(m.group(3) or m.group(2)), "snippet": m.group(4)})
     bt = next((t for n, t in texts if n == "baseline.md"), "")
     hdr = header_repos(bt)
     if not found:
         return {"workspace": workspace, "anchors": [], "repos": [], "notes": []}
-    ws = workspace or find_workspace(home, found[0]["path"]) or os.getcwd()
+    ws = workspace or next((w for w in (find_workspace(home, r["repo"] + "/x") for r in hdr) if w), None) \
+        or find_workspace(home, found[0]["path"]) or os.getcwd()
+    verified = load_ids(home)[0].get("verified", {})
     notes, repos = [], []
     for r in hdr:
         rp, prefix = os.path.join(ws, r["repo"]), r["repo"] + "/"
@@ -586,10 +615,23 @@ def check_anchors(home, texts, workspace=None, window=6, far=40):
                  "anchored_files_changed": sorted(rel if not known else rel & changed)}
         if not known:
             notes.append(f"repo {r['repo']}: baseline commit {r['baseline']} not found — every anchored file needs a recheck")
+        if r["released"]:
+            up = git(rp, "rev-parse", "--abbrev-ref", r["released"] + "@{upstream}")
+            behind = git(rp, "rev-list", "--count", f"{r['released']}..{up}") if up else None
+            age = git(rp, "log", "-1", "--format=%cr", r["released"])
+            if behind and behind != "0":
+                notes.append(f"repo {r['repo']}: released ref {r['released']} is {behind} commits behind {up} — "
+                             f"use '{up}' as the released ref (last commit {age}); a run never fetches")
+            elif age:
+                entry["released_age"] = age
         repos.append(entry)
         for a in mine:
             a["repo_root"], a["rel"] = rp, a["path"][len(prefix):]
             a["recheck"] = a["rel"] in entry["anchored_files_changed"]
+            vf = verified.get(a["fact"] or "", {}).get(a["path"])
+            if a["recheck"] and vf and os.path.isfile(os.path.join(rp, a["rel"])) and \
+                    sha_bytes(open(os.path.join(rp, a["rel"]), "rb").read())[:12] == vf:
+                a["recheck"] = False
             a["released_ref"] = r["released"]
     show_cache = {}
     for a in found:
@@ -632,6 +674,38 @@ def check_anchors(home, texts, workspace=None, window=6, far=40):
 
 # ---------------------------------------------------------------- ids, lock, quote, hash, snapshots
 
+def mark_verified(home, facts, workspace=None):
+    """Record each fact's anchored files as verified now (sha256-12), so 'recheck' clears until they change again."""
+    bt = read(os.path.join(home, "baseline.md"))
+    r = check_anchors(home, [("baseline.md", bt)], workspace)
+    issued, err = load_ids(home)
+    if err:
+        raise SystemExit(err)
+    ver = issued.setdefault("verified", {})
+    done = []
+    for a in r["anchors"]:
+        if a["fact"] in facts and a.get("repo_root") and str(a.get("state", "")).startswith("ok"):
+            fp = os.path.join(a["repo_root"], a["rel"])
+            if os.path.isfile(fp):
+                ver.setdefault(a["fact"], {})[a["path"]] = sha_bytes(open(fp, "rb").read())[:12]
+                done.append(a["fact"])
+    write_atomic(os.path.join(home, "record", "ids.json"), json.dumps(issued, indent=1, sort_keys=True) + "\n")
+    return sorted(set(done))
+
+
+def row_hash(home, qid):
+    """sha256-12 of a question row's text plus the current text of every line it touches."""
+    qt = read(os.path.join(home, "questions.md"))
+    m = re.search(rf"^### {re.escape(qid)} ·.*?(?=^### |\Z)", qt, re.M | re.S)
+    if not m:
+        return None
+    row = m.group(0)
+    ft = read(os.path.join(home, "FEATURE.md"))
+    touched = re.findall(r"\b(?:FR|CH|KEEP)-\d+\b", (re.search(r"^- \*\*Touches:\*\*(.*)$", row, re.M) or [None, ""])[1])
+    lines = [l for _, l in logical_lines(ft) if any(re.match(BULLET + r"\**" + re.escape(t) + r"\**\s", l) for t in touched)]
+    return sha_bytes((norm(row) + "\n" + "\n".join(norm(l) for l in lines)).encode("utf-8"))[:12]
+
+
 def ids(home, sync=False, nxt=None, count=1, veto=None):
     path = os.path.join(home, "record", "ids.json")
     issued, err = load_ids(home)
@@ -659,7 +733,7 @@ def lock(home, self_id=None):
     path = os.path.join(home, "record", "log.md")
     if not os.path.exists(path):
         return None
-    entries, cur = [], None
+    entries, cur, abandoned = [], None, set()
     for line in read(path).splitlines():
         h = ENTRY_HEAD.match(line)
         if h:
@@ -667,7 +741,10 @@ def lock(home, self_id=None):
             entries.append(cur)
         elif cur and re.match(r"^-\s+(closed|paused)(\s|$)", line):
             cur["closed"] = True
-    openings = [e for e in entries if not e["closed"] and e["run"] != self_id]
+        ab = ABANDONED.match(line)
+        if ab:
+            abandoned.add(ab.group(1))
+    openings = [e for e in entries if not e["closed"] and e["run"] != self_id and e["run"] not in abandoned]
     if not openings:
         return None
     last_is_open = entries and entries[-1] is openings[-1]
@@ -840,6 +917,30 @@ def selftest():
         assert lk["run"] == "ccc333" and lk["minutes_since_last_write"] < 30, lk
         lk = lock(home, self_id="ccc333")
         assert lk["run"] == "aaa111" and lk["minutes_since_last_write"] == float("inf"), lk
+        # provenance quotes are not live content
+        ft = read(os.path.join(home, "FEATURE.md"))
+        ft = ft.replace("## Edge cases\n", "## Edge cases\n\n- Pins sync at once.\n  *(From q-01, 2026-10-27 — replaces: \"[NEEDS CLARIFICATION: FR-2 — which mark? → q-01] and Default D9 (standard practice — adopted 2026-10-20): old\".)*\n")
+        write_atomic(os.path.join(home, "FEATURE.md"), ft)
+        c2 = counts(home)
+        assert c2["markers"] == c["markers"] and c2["defaults"] == c["defaults"], (c, c2)
+        # abandoned note frees the old entry
+        with open(os.path.join(home, "record", "log.md"), "a") as f:
+            f.write("- note closed as abandoned: aaa111\n")
+        assert lock(home, self_id="ccc333") is None
+        # header with a mode
+        with open(os.path.join(home, "record", "log.md"), "a") as f:
+            f.write("\n## 2026-10-26 12:00 · init soft · ddd444 · blueprint-feature v3\n- open\n")
+        assert lock(home)["run"] == "ddd444"
+        # recheck clears once verified
+        assert mark_verified(home, ["B-1"]) == ["B-1"]
+        r = check_anchors(home, [("baseline.md", read(os.path.join(home, "baseline.md")))])
+        assert not r["anchors"][0]["recheck"], r["anchors"][0]
+        assert row_hash(home, "q-01") and row_hash(home, "q-09") is None
+        # ready stamp refuses uncovered blocks
+        ft = read(os.path.join(home, "FEATURE.md")).replace("Status: Draft", "Status: Ready for planning — 2026-10-27")
+        ft = ft.replace("## Why\n", "## Why\n\nNot covered yet.\n")
+        write_atomic(os.path.join(home, "FEATURE.md"), ft)
+        assert any("not covered yet" in e for e in lint(home)[0])
         print("selftest: ok")
         return 0
     finally:
@@ -860,7 +961,8 @@ def main(argv=None):
     s = sub.add_parser("hash"); s.add_argument("file", nargs="?"); s.add_argument("--text")
     s = sub.add_parser("ids"); s.add_argument("home"); s.add_argument("--sync", action="store_true")
     s.add_argument("--next", choices=list(PREFIXES)); s.add_argument("--count", type=int, default=1)
-    s.add_argument("--veto")
+    s.add_argument("--veto"); s.add_argument("--verified", help="comma-separated B-n facts just confirmed by a verifier")
+    s = sub.add_parser("rowhash"); s.add_argument("home"); s.add_argument("q")
     s = sub.add_parser("lock"); s.add_argument("home"); s.add_argument("--self")
     s = sub.add_parser("snapshot"); s.add_argument("home"); s.add_argument("--run", required=True)
     s = sub.add_parser("changed"); s.add_argument("home")
@@ -925,7 +1027,11 @@ def main(argv=None):
             if not os.path.exists(fp):
                 print(f"anchors: facts file not found: {a.facts}", file=sys.stderr)
                 return 2
-            texts.append(("facts", read(fp)))
+            ft_ = read(fp)
+            if not (ANCHOR.search(ft_) or ANCHOR_BARE.search(ft_)):
+                print("anchors: no anchor in the facts file — write them as `<repo>/<path>:<line>` «snippet»", file=sys.stderr)
+                return 2
+            texts.append(("facts", ft_))
         for n in ("baseline.md", "FEATURE.md"):
             p = os.path.join(home, n)
             if os.path.exists(p):
@@ -956,6 +1062,14 @@ def main(argv=None):
                   f"{sum(1 for x in r['anchors'] if x.get('recheck'))} to recheck, "
                   f"{sum(1 for x in r['anchors'] if x.get('in_released') is False)} not in the released code")
         return 1 if stale else 0
+    if a.cmd == "rowhash":
+        h = row_hash(home, a.q)
+        print(h or "no such row")
+        return 0 if h else 1
+    if a.cmd == "ids" and a.verified:
+        done = mark_verified(home, [x.strip() for x in a.verified.split(",") if x.strip()], None)
+        print("verified: " + (", ".join(done) or "none (no checkable anchors)"))
+        return 0
     if a.cmd == "ids":
         if a.next:
             print(" ".join(ids(home, sync=a.sync, nxt=a.next, count=a.count, veto=a.veto)))

@@ -137,7 +137,10 @@ these, and never writes an answer in without a question row.
   - `*(From your note of 2026-10-27.)*` — new owner material;
   - `*(From q-04, 2026-10-27 — replaces: "<old text>".)*` — the owner's answer;
   - `*(From q-04 — delegated answer, 2026-10-27.)*` — a delegated answer (never with `replaces`);
-  - `*(Corrected F2, 2026-10-27 — was: "<old text>".)*` — a fix.
+  - `*(Corrected F2, 2026-10-27 — was: "<old text>".)*` — a fix that replaced text;
+  - `*(Added F3, 2026-10-27 — from sources/002-notes.md.)*` — a fix that added a missing sourced fact.
+  When the old text held a marker or a default label, quote it with that part shortened to `[…]` — `bf.py`
+  ignores everything inside a provenance line either way.
   Lines `init` writes from the first request carry none; the request is their source.
 - **Depth** of a line: 1 for `init` lines and owner material; for a line from `q-NN`, that row's `Depth`
   plus 1. A question's `Depth` is the deepest line its grounding quotes (1 for a gap grounded in an
