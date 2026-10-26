@@ -26,7 +26,11 @@ repos, read-only: {{REPOS}} · project guides and rules: {{GUIDES}}
 7. **Unfailable lines** — requirements you cannot picture failing; vague words standing in for a decision
    (*appropriate*, *quickly*, *if needed*, *etc.*).
 8. **Lifecycle holes** — existing data on launch day, older app versions, offline, other members' devices,
-   leave/remove/close/delete, account deletion.
+   leave/remove/close/delete, account deletion; a compatibility table row missing or a cell that cannot hold.
+9. **Code standing in for intent** — a requirement about behaviour after the feature that rests only on how
+   the code works today, with no owner words or answer behind it.
+10. **Defaults that decide too much** — a `Default` that settles money, scope, wording, a date, retention,
+   minors, a change to what users have today, a new capability or who sees something new.
 
 ## Return — one fenced JSON block
 
@@ -41,3 +45,5 @@ repos, read-only: {{REPOS}} · project guides and rules: {{GUIDES}}
 }
 ```
 Return an empty list if you find nothing you can evidence. Do not pad.
+
+<!-- Slots: FEATURE_PATH, BASELINE_PATH, SOURCES_DIR, QUESTIONS_PATH, REPOS, GUIDES -->

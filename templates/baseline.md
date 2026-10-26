@@ -1,9 +1,11 @@
 # What the product does today — {{NAME}}
 
-Verified: _date_ · Repos: _repo commit (branch), one per line_ · Wiki: _path, verified at commit_
+Verified: _date_
+Repos (one line each: name, commit, branch, and the ref users have — the reviewer reads drift from these):
+- _repo commit (branch) · released: ref — one line per repo_
 
-Each fact: `B-n — <observable behaviour> — <repo>/<path>:<line> «verbatim snippet»`. Facts are numbered
-once and never renumbered; a wrong one is struck through and points at its correction.
+Each fact: `- B-n — <observable behaviour> — `<repo>/<path>:<line>` «verbatim snippet»`. Numbered once,
+never renumbered; a wrong one is struck through and points at its correction.
 
 ## Surfaces
 
@@ -16,6 +18,12 @@ once and never renumbered; a wrong one is struck through and points at its corre
 ## Constraints
 
 ## Project rules
+
+### Always ask
+
+### Never raise
+
+## Blast radius
 
 ## Not present today
 

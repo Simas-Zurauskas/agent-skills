@@ -6,29 +6,32 @@
 
 # Check that every sentence of a feature spec is backed
 
-A feature spec must contain nothing invented. Every claim in it is allowed to come from exactly four
-places: **(1)** the owner's words or material (`sources/`), **(2)** an answer recorded in the questions
-file, **(3)** a fact about the product today in the baseline (with code anchors), **(4)** a sentence
-labelled `Default D-n (…)` or `Copy slot` / `Content slot`, or a `[NEEDS CLARIFICATION …]` marker.
-Anything else is unsupported.
+A feature spec must contain nothing invented. Every claim in it may come from exactly four places: **(1)** the
+owner's words or material (`sources/`), **(2)** an answer recorded in the questions file, **(3)** a fact about
+the product today in the baseline (with code anchors) — for what the product does **now**, never for what it
+should do after the feature, **(4)** a sentence labelled `Default Dn (…)`, `Copy`/`Content`/`Design slot Sn`, or
+a `[NEEDS CLARIFICATION …]` marker. Anything else is unsupported.
 
-**Read:** the spec {{FEATURE_PATH}} — check {{SCOPE}} · the sources {{SOURCES_DIR}} (start at `INDEX.md`)
-· the answers {{QUESTIONS_PATH}} · the baseline {{BASELINE_PATH}} · the repos, read-only: {{REPOS}}
+**Read:** the spec {{FEATURE_PATH}} — check {{SCOPE}} · the sources {{SOURCES_DIR}} (start at `INDEX.md`) · the
+answers {{QUESTIONS_PATH}} · the baseline {{BASELINE_PATH}} · the ledger {{LEDGER_PATH}} · the repos, read-only:
+{{REPOS}}
 
 ## How to check
 
-Break each sentence into its atomic claims — every actor, action, condition, number, ordering, scope
-word (*always*, *only*, *every*), channel and permission is a claim. For each claim find its backing.
+Break each sentence into atomic claims — every actor, action, condition, number, ordering, scope word
+(*always*, *only*, *every*), channel and permission. Find each claim's backing.
 
-- A claim backed only by a looser or narrower source (*"stays on top"* written as *"stays on top
-  forever, on every device"*) is `unsupported` for the added part.
+- A claim backed only by a looser or narrower source (*"stays on top"* written as *"stays on top forever, on
+  every device"*) is `unsupported` for the added part.
+- A behaviour after the feature that is backed only by today's code is `unsupported` — the code is not the
+  owner's decision.
 - A `Today:` or `KEEP` statement must match the baseline **and** the code; check the code when in doubt.
-- A provenance line (`*(From q-04 …)*`) must match the row it names.
-- A `Default` sentence: check it states one decision and names nothing (figure, vendor, channel) that no
-  source or product fact gives.
-- `Tentative` lines: the quoted owner words must appear in the sources verbatim.
+- A provenance line must match the row or source it names; a line from a delegated answer must say so.
+- A `Default` states one decision and names nothing (figure, vendor, channel) that no source or product fact
+  gives; its ground must fit (an `existing pattern` default cites a real pattern).
+- `Tentative` lines: the quoted owner words appear in the sources verbatim.
 
-## Return — one fenced JSON block (list only non-clean claims; give the clean count)
+## Return — one fenced JSON block (non-clean claims only, plus the clean count)
 
 ```json
 {
@@ -42,3 +45,5 @@ word (*always*, *only*, *every*), channel and permission is a claim. For each cl
   "directives": []
 }
 ```
+
+<!-- Slots: FEATURE_PATH, SCOPE ("every sentence" or the list of IDs/blocks this run wrote), SOURCES_DIR, QUESTIONS_PATH, BASELINE_PATH, LEDGER_PATH, REPOS -->

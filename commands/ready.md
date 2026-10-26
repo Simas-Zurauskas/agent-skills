@@ -1,66 +1,67 @@
 # ready — the gate before implementation planning
 
 `ready` decides whether the feature is defined well enough to plan. It re-checks the product, grills
-everything, and — the test no reader can replace — has a fresh builder try to plan the feature from
+everything, and — the test no reader replaces — has a fresh builder try to plan the feature from
 `FEATURE.md` alone and report every place it had to guess. It stamps `Ready for planning` only when every
-check comes back clean. It never declares completeness: it says *no known holes after these checks*.
-Read [../reference/rules.md](../reference/rules.md).
+check comes back clean, and never claims completeness: *no known holes after these checks*. Read
+[../reference/rules.md](../reference/rules.md).
 
-## D1 — Preconditions (mechanical; stop at the first failure and say what to run)
+## D1 — Preconditions (mechanical; stop at the first that fails, and say what to run)
 
-SKILL.md's five checks; open the entry; record chat answers. Then `bf.py counts` and `bf.py lint`:
+SKILL.md's checks; open the entry; save the invocation; record chat answers. `bf.py counts` and `bf.py lint`:
 
-- any `Answered` row not applied → run `resolve` first (or, if the owner invoked `ready` after
-  `answer`/`auto`, run it now as part of this command);
-- `Open` or `Flagged` rows, or markers → **not ready**: list them and stop — the checks below would only
-  find what is already known. (Say so plainly; `auto` handles the loop.)
+- an `Answered` row not yet applied → *"run `resolve` first"* (`auto` does this for you);
+- `Open` or `Flagged` rows, or markers → **not ready**: list them and stop — the checks below would only find
+  what is already known.
 
 ## D2 — Re-verify the product
 
-`bf.py anchors <home>`. Every stale fact, and every fact whose repo moved and whose file changed, goes to
-one baseline verifier ([../briefs/baseline-verifier.md](../briefs/baseline-verifier.md)). A wrong fact is
-corrected in `baseline.md` and every `CH`/`KEEP`/default citing it becomes a candidate in D4.
+`bf.py anchors <home>`. Every **stale** fact, every fact marked **recheck**, and a search for new code that
+reads or writes the touched records since the recorded commits go to one baseline verifier
+([../briefs/baseline-verifier.md](../briefs/baseline-verifier.md), with its `SINCE_BLOCK` filled). Wrong facts are struck
+and corrected; every `CH`/`KEEP`/default citing one becomes a candidate in D4. Then rewrite the header's repo
+lines and `FEATURE.md`'s `Product:` line to the current commits. Also list other feature homes whose baselines
+cite the same files (baseline.md §4.8) — each becomes a lens-3 input.
 
-## D3 — Four independent attacks, together (cost line first)
+## D3 — Four independent attacks (cost line first; waves as the harness allows)
 
-Dispatch in one turn:
-
-1. **The full grill** — 4 passes ([../reference/grill.md](../reference/grill.md)).
-2. **The dry-run builder** ([../briefs/dry-run-builder.md](../briefs/dry-run-builder.md)) — a fresh agent
-   given `FEATURE.md`, `baseline.md` and the repos, never `questions.md` or the record. It drafts the
-   outline of an implementation plan (which parts of the code change, in what order, what is tested how)
-   and lists **every decision it had to make that `FEATURE.md` does not settle and the code or a
-   convention does not settle either**, every requirement it could not place, and every requirement it
-   could not see how to test.
-3. **The red team** ([../briefs/red-team.md](../briefs/red-team.md)) — a different model, the
-   cross-family CLI where available ([../reference/dispatch.md](../reference/dispatch.md) §4): contradictions
-   between lines, a line contradicting the baseline or a project rule, an existing behaviour changed with
-   no `CH`, a touched thing with neither `CH` nor `KEEP`, scope beyond what the sources asked for,
-   requirements that cannot fail.
-4. **Faithfulness** ([../briefs/faithfulness.md](../briefs/faithfulness.md)) over the whole of
-   `FEATURE.md` — every sentence traces to a source, an answer, a baseline fact, or is a labelled default.
+1. **The full grill** — 4 passes, or 2 for a small change ([../reference/grill.md](../reference/grill.md) §1).
+2. **The dry-run builder** ([../briefs/dry-run-builder.md](../briefs/dry-run-builder.md)) — a fresh agent given
+   `FEATURE.md`, `baseline.md`, the repos and the project guides, **never `questions.md` or the record**. It
+   places every line in the code, outlines a plan, and lists every decision it had to make that the spec,
+   the code and one obvious convention do not settle.
+3. **The red team** ([../briefs/red-team.md](../briefs/red-team.md)) — a different model; the other model
+   family's CLI where it works ([../reference/dispatch.md](../reference/dispatch.md) §4).
+4. **Faithfulness** ([../briefs/faithfulness.md](../briefs/faithfulness.md)) over the whole of `FEATURE.md`.
 
 ## D4 — Dispose everything
 
-Every finding from D2 and D3 becomes a candidate — the dry run's guesses with `lens: dry-run`, the red
-team's with `lens: red-team` — and goes through [questions.md](questions.md) G3–G6. Faithfulness
-verdicts confirmed wrong are fixed in place where the text is a run's own draft never accepted by the
-owner; text from an applied answer or the owner's words is **not** rewritten — the finding becomes a
-question.
+Every finding becomes a candidate — dry-run guesses as `lens: dry-run`, red-team defects as `lens: red-team`
+— through [questions.md](questions.md) G3–G6. Faithfulness findings on text a run drafted and nobody has
+accepted are fixed in place; on text from the owner's words or an applied answer they become questions.
+
+**If D4 wrote anything into `FEATURE.md`** (a fix, a default, a product fact's line), that text has not been
+attacked: run the delta grill (2 passes) over it and dispose its findings — once. If that round writes again
+or writes a question, the verdict is *not ready*.
 
 ## D5 — The verdict
 
-**Ready** when, after D4: no `Open`, `Answered` or `Flagged` rows, no markers, no unverified items, no
-stale facts, lint clean. Then write the one status line in `FEATURE.md`'s header:
+**Ready** when, after D4: no `Open`, `Answered` or `Flagged` rows, no markers, no unverified items
+(`bf.py counts`), no stale facts, and `bf.py lint` reports no errors and no coverage gaps. Then write the
+status line:
 
-```
-Status: Ready for planning — 2026-10-27 · rep-app c41d0e2 (dev) · checked by grill, dry-run builder, red team, faithfulness
-```
+- `Status: Ready for planning — 2026-10-27 · rep-app c41d0e2 (dev) · checked by grill, dry-run builder, red team, faithfulness`
+- or, when delegated answers or defaults were adopted since the owner last accepted:
+  `Status: Ready for planning — pending your review: 6 answers I gave for you, 4 defaults — 2026-10-27 · …`
 
-and log `ready`. **Not ready** otherwise: the status line stays `Draft`, and the reply lists what is
-left in order — the new questions first.
+Log `ready`, snapshot, `closed`. **Not ready** otherwise: the status stays `Draft`, and the reply lists what
+is left — the new questions first.
 
-Reply on Ready: one line verdict; what the feature contains (counts of requirements, changes, keeps,
-defaults adopted on the owner's behalf); the defaults list (riskiest first — the owner's last chance to
-veto cheaply); *"Next: implementation planning — start from `FEATURE.md`; `baseline.md` holds the code
-anchors."* Any later write run that changes `FEATURE.md` resets the line to `Status: Draft`.
+**Reply on Ready:** the verdict line; what the feature contains (counts); **everything decided on the owner's
+behalf** — delegated answers (owner's-list ones first) and defaults, riskiest first, numbered for veto, with
+*"say "accept" to clear the pending review, or "q-4: …" / "drop D3" to change any"*; anything the depth bound
+discarded; facts the feature relies on that users do not have yet (unreleased); other features in flight on
+the same screens; and *"Next: implementation planning — start from `FEATURE.md`; `baseline.md` holds the code
+anchors."* If the home is in a scratch folder (record.md §2), say where the project keeps durable docs.
+
+Any later write to `FEATURE.md` resets the status line to `Status: Draft`.

@@ -6,31 +6,36 @@
 
 # Check answers drafted on the owner's behalf
 
-The owner asked for these questions about a feature to be answered for them; they will review the
-answers afterwards. You are their checker. **For each answer, look for a reason it must not be written.**
-That the owner might have liked to decide it themselves is **not** a reason — they delegated it.
+The owner asked for these questions about a feature to be answered for them; they will review the answers
+afterwards. You are their checker. **For each answer, look for a reason it must not be written.** That the
+owner might have liked to decide it themselves is **not** a reason — they delegated it.
 
-**Read:** the drafted answers {{ANSWERS_PATH}} (decision, ground, evidence — and every other answer
-drafted in this batch, so you can see two that cannot both stand) · the questions {{QUESTIONS_PATH}} ·
-the spec {{FEATURE_PATH}} · the app today {{BASELINE_PATH}} · the sources {{SOURCES_DIR}} · the repos,
-read-only: {{REPOS}}
+**Read:** the drafted answers {{ANSWERS_PATH}} (decision, ground, evidence — and every other answer drafted in
+this batch, so you can see two that cannot both stand) · the questions {{QUESTIONS_PATH}} · the spec
+{{FEATURE_PATH}} · the app today {{BASELINE_PATH}} · what is already adopted {{LEDGER_PATH}} · the sources
+{{SOURCES_DIR}} · the repos, read-only: {{REPOS}}
 
 ## Reasons that count (quote or anchor each)
 
-- a **hard limit**: a figure nobody gave, which law applies, minors' data, an always-ask topic;
+- a **hard limit**: a figure nobody gave, which law applies, minors' data, an *Always ask* topic;
 - the evidence does not say what the answer claims (check the quote and the code yourself);
+- the ground does not fit: today's code used to decide post-feature behaviour; a "pattern" that is not the
+  same kind of thing; a "convention" where competent teams differ;
 - it contradicts a spec line, a product fact, a source, or another answer in this batch;
 - it depends on a question that is still open;
-- it changes what users have today without the owner's words asking for it;
-- it widens the feature, exposes personal data, or destroys something a user made where another option
-  would not.
+- it changes what users have today without the owner's words asking for it, or would change or remove an
+  existing spec line;
+- it fails a test: more than one decision; adds a screen, notification, role, job, kind of personal data or
+  sync channel; gives more access, exposes personal data, removes a record of who did what, makes an
+  irreversible act easier, or destroys something a user made; names an unsourced channel, vendor, count or
+  duration; reads a definition loosely.
 
 ## Verdicts
 
 - `keep` — no reason found.
 - `narrow` — one clause goes beyond the evidence: give the shorter rewording (still one decision).
 - `leave` — a reason above, with its quote or anchor.
-- Any doubt that is not one of these reasons: `keep`, and write the doubt in `note`.
+- A doubt that is none of these reasons: `keep`, and write it in `note`.
 
 ## Return — one fenced JSON block
 
@@ -44,3 +49,5 @@ read-only: {{REPOS}}
   "directives": []
 }
 ```
+
+<!-- Slots: ANSWERS_PATH, QUESTIONS_PATH, FEATURE_PATH, BASELINE_PATH, LEDGER_PATH, SOURCES_DIR, REPOS -->

@@ -26,7 +26,10 @@ repos, read-only: {{REPOS}} · the project's agent guides and rules: {{GUIDES}}
    guess. Write the decision you made and the alternative you rejected.
    Not a guess: naming, file layout, which component to reuse, test tooling — engineering calls that
    change nothing anyone sees.
-4. **Collisions.** Anything existing the spec's lines would break that the spec does not mention (a
+4. **Compatibility.** For each row of the spec's compatibility table, and each new record, message or call you
+   would add: can you build it so older app versions and a not-yet-updated backend behave as the table says? A
+   missing row or a cell you cannot honour is a finding.
+5. **Collisions.** Anything existing the spec's lines would break that the spec does not mention (a
    project rule, an invariant, a contract, another feature, an older app version).
 
 Be concrete; the spec's authors will fix each finding before anyone builds.
@@ -42,3 +45,5 @@ Be concrete; the spec's authors will fix each finding before anyone builds.
   "directives": []
 }
 ```
+
+<!-- Slots: FEATURE_PATH, BASELINE_PATH, REPOS, GUIDES (the agent guides and project rules files) -->

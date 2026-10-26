@@ -1,105 +1,122 @@
 # The baseline — what the product does today
 
-`baseline.md` holds the facts about the existing product that this feature touches, each cited to where
-it is true and verified by a second agent. It is what makes a question like *"how does the list sort
-today?"* a lookup instead of a question to the owner, and what every `CH`/`KEEP` line cites.
+`baseline.md` holds the facts about the existing product that this feature touches, each cited to where it
+is true and checked by a second agent. It is what makes *"how does the list sort today?"* a lookup instead
+of a question to the owner, and what every `CH`/`KEEP` line cites. It describes **today only** — never what
+the feature should do ([rules.md](rules.md) §4).
 
 ## 1. Product sources, in order of authority
 
 | Rank | Source | Use |
 |---|---|---|
-| 1 | **The code at the checked-out commit** — app, backend, migrations, copy files, config | The reference. A fact that bears on a requirement is confirmed here |
+| 1 | **The code** — app, backend, migrations, copy files, config — at the checked-out commit | The reference. Every fact is confirmed here |
 | 2 | **Tests** | State intended behaviour. A test that disagrees with the code is a finding (report it), not a fact |
-| 3 | **The project's generated wiki / agent docs** (an `AGENTS/` track, contracts, invariants, flow maps) | The fast index into the code. A wiki fact is used as is only where its page's verified commit matches the code's for the files it cites; otherwise it is re-confirmed in code |
-| 4 | **Hand-written docs** — design system, changelog, recent task notes, the design lab | Context and patterns. The app wins where they differ |
-| 5 | **The workspace's agent guides and standing project rules** | *Project rules* (rules.md §8) |
-| — | **A sealed or frozen PRD; Notion** | **Not a product source.** History at most, labelled as such; never evidence of current behaviour |
+| 3 | **The project's generated wiki / agent docs** (an agents track, contracts, invariants, flow maps) | The fast index into the code. A wiki statement becomes a fact only once confirmed in code — cite both |
+| 4 | **Hand-written docs** — design system, changelog, recent task notes, the design lab | Context and patterns; the app wins where they differ |
+| 5 | **Agent guides and the owner's standing rules** | *Project rules* ([rules.md](rules.md) §8) |
+| — | **A sealed or frozen PRD; Notion** | **Not a product source.** At most history, labelled as such; never evidence of current behaviour |
 
-**Things the code cannot tell you** — production data volumes, store settings, what users actually do,
-legal posture — are not product facts. If a requirement turns on one, it is a question for the owner,
-class *a fact only you have*.
+**What the code cannot tell you** — real usage and volumes, store settings, legal posture — is not a
+product fact. If a requirement turns on one, it is a question for the owner (*a fact only you have*).
 
-## 2. Fact format
+## 2. Two versions of "today"
+
+The feature will be built on the checked-out code, but users run what was released. The header records
+both for each repo:
 
 ```
-## Challenges list
+Verified: 2026-10-26
+Repos (…):
+- rep-app a7ca2ba (dev) · released: main
+- rep-marketing ecb8541 (main) · released: main
+- wiki-rep 6966213 (main)
+```
+
+`released:` names the ref users have (the release branch or tag the workspace guides name; ask nothing —
+if no guide says, use the default branch and say so). `bf.py anchors` checks each fact's snippet against
+that ref too: a fact true on the checked-out code but absent from the released ref is marked
+`(unreleased — not in main)` at the end of its line. A `CH` line built on an unreleased fact says so in its
+*Today* half, because users have never seen that behaviour. Uncommitted work in the checkout is noted in the
+run report.
+
+## 3. Fact format
+
+```
+## Surfaces
+
+### Challenges list
 - B-4 — Open challenges are ordered by most recent activity, newest first. — `rep-app/src/features/challenges/sort.ts:18` «return b.lastSeq - a.lastSeq»
 - B-5 — Closed challenges are listed after all open ones. — `rep-app/src/features/challenges/list.tsx:41` «closed.length > 0 &&»
 ```
 
-- **One fact per line, written as observable behaviour** in the product's own terms, then one or more
-  anchors: `` `<repo>/<path>:<line>` `` and a short verbatim snippet in «» from at or near that line. The
-  snippet is what `bf.py anchors` re-finds when line numbers drift.
-- A wiki-sourced fact cites the wiki page **and** the code anchor it gives.
-- **An absence is a fact only with its search:** `B-9 — Nothing in the app lets a member pin or favourite
-  a challenge. — searched: rg -i "pin|favou?rite|star" rep-app/src rep-app/supabase → no match for a
-  challenge pin (only "PIN code" in sign-in)`. A search names its paths; a search tool that honours ignore
-  files must not be the only one used on ignored folders.
-- `B-n` numbers are issued once; a fact proved wrong is struck (`~~…~~ wrong — see B-14`), never
-  renumbered.
+- **One fact per line, as observable behaviour** in the product's own terms, then one or more anchors:
+  `` `<repo>/<path>:<line>` `` (or `:<from>-<to>`) and a short verbatim snippet in «» from that range — the
+  snippet is what `bf.py anchors` re-finds when lines move. Surfaces are `###` headings under `## Surfaces`.
+- **An absence is a fact only with its search:** `- B-9 — Nothing lets a member pin or favourite a
+  challenge. — searched: rg -i "pin|favou?rite" rep-app/src rep-app/supabase → only "PIN code" in sign-in`.
+  Name the paths searched; don't rely only on a tool that honours ignore files.
+- `B-n` numbers come from `bf.py ids --next B`; a fact proved wrong is struck and points at its
+  correction (`- ~~B-4 — …~~ wrong — see B-14`), never renumbered.
+- A fact written with no second agent available ends `(unverified)`.
 
-## 3. Sections
+## 4. Sections (the template's, in order; a section that does not apply says `None touched.`)
 
-The template ([../templates/baseline.md](../templates/baseline.md)) has these sections; a section that
-does not apply says `None touched.`
-
-1. **Header** — each repo with branch and short commit; the wiki and the commit it was verified at; the
-   date verified.
-2. **Surfaces** — one `##` per screen, sheet, flow or notification the feature touches.
-3. **Actors and permissions** — the roles that exist (their names in the product) and what each can do
-   on the touched surfaces.
-4. **Data** — the records the feature reads or changes, what is stored, who can read it, how it syncs,
-   how it is deleted.
+1. **Header** — date verified; each repo with commit, branch and `released:` ref.
+2. **Surfaces** — one `###` per screen, sheet, flow, notification, share image or page the feature touches.
+3. **Actors and permissions** — the roles that exist, by their product names, and what each can do on the
+   touched surfaces.
+4. **Data** — the records the feature reads or changes: what is stored, who can read it, how it syncs,
+   how it is deleted, how older app versions read it.
 5. **Patterns to follow** — how the product already does the same *kind* of thing (sheets, confirmations,
-   ordering, empty states, motion, copy location, error handling, offline behaviour). The ground for
-   `existing pattern` defaults — so cite the place the pattern is defined, not one instance of it.
-6. **Constraints** — invariants, contracts, platform and version rules the feature must respect (old
-   app versions coexisting, minimum supported version, release order), each cited.
-7. **Project rules** — standing rules from the agent guides that bound the feature (rules.md §8), each
-   cited to the file and line.
-8. **Not present today** — searched absences.
-9. **Drift noticed** — places the wiki or a doc disagrees with the code, with the exact correction, for
-   whoever maintains them. The skill never edits them.
+   ordering, toggles, per-person preferences, empty states, motion, copy location, errors, offline). The
+   ground for `existing pattern` defaults: cite where the pattern is defined, not one instance.
+6. **Constraints** — invariants, contracts, platform and version rules (older app versions in use,
+   minimum supported version, contract-break checks, release order), each cited.
+7. **Project rules** — [rules.md](rules.md) §8, each quoted with its file; with `### Always ask` and
+   `### Never raise`.
+8. **Blast radius** — every other feature, screen, notification, share image, page or job that reads or
+   writes the same records or shows on the same surfaces, each anchored. Lens 3 reads this on every grill.
+   It also names **other feature homes in the workspace** whose baselines cite the same files (`grep -l`
+   their `baseline.md` for this feature's anchored paths) — two features in flight on one surface.
+9. **Not present today** — searched absences.
+10. **Drift noticed** — where the wiki, a doc or a guide disagrees with the code (or points at a frozen
+    PRD), with the exact correction, for whoever maintains them. The skill never edits them.
 
-## 4. How it is built — cartographers, then a blind verifier
+## 5. How it is built — cartographers, then a blind verifier
 
-**Scope it first (orchestrator, no agents).** Read the workspace guides and the wiki's index. From the
-request, list the surfaces, records and flows the feature plausibly touches, and the words to search
-for. Freeze this as the shared part of the cartographer brief.
+**Scope it first (orchestrator, no agents).** Read the guides, the owner's rules (rules.md §8), the wiki
+index, and the invariants and contracts pages. Write the project rules to `work/<run-id>/rules.md`. From
+the request, list the surfaces, records and flows the feature plausibly touches and the words to search
+for.
 
-**Cartographers (2–4 agents, concurrent)** — [../briefs/cartographer.md](../briefs/cartographer.md).
-Split by area so their reading does not overlap, typically:
-- **Screens and flows** — every surface the user sees that the feature touches, how it behaves today;
-- **Data and backend** — records, reads and writes, permissions, sync, deletion, invariants, contracts;
-- **Cross-cutting** — notifications, realtime and offline, sharing and links, older app versions,
-  other repos (a marketing site, a design lab) the feature reaches;
-- **Patterns and rules** — how the product does this kind of thing elsewhere; project rules.
+**Size the work.** A **small change** — the request names one surface and at most a few behaviours — gets
+one cartographer covering every area. Otherwise **2–4 cartographers**, concurrent
+([../briefs/cartographer.md](../briefs/cartographer.md)), split so their reading does not overlap:
+screens and flows · data and backend · cross-cutting (notifications, realtime and offline, sharing and
+links, older versions, other repos) · patterns and rules. Each returns facts, blast radius, patterns,
+drift and unknowns.
 
-Each returns facts in the §2 shape plus **blast radius**: other features that read or write the same
-records or show on the same surfaces — the collisions lens 3 needs.
+**Merge (orchestrator).** Deduplicate, number, write the draft to `<home>/work/<run-id>/facts-draft.md` in
+the §3 format, then `bf.py anchors <home> --facts <home>/work/<run-id>/facts-draft.md`: a missing file or
+snippet is fixed by reading the code, or the fact is dropped.
 
-**Merge (orchestrator).** Deduplicate, number `B-n`, run `bf.py anchors <home> --facts <file>` on the
-draft: an anchor whose file is missing or whose snippet is not found is sent back to its fact — fixed by
-the orchestrator reading the code, or dropped.
+**Verify (1 agent, fresh, blind, a different model where available)**
+([../briefs/baseline-verifier.md](../briefs/baseline-verifier.md)): `confirmed`, `wrong` (with the correct
+statement and anchor) or `unsupported` per fact. Corrections are re-anchored and re-checked by the script;
+unsupported facts are dropped or re-derived once. Then write `baseline.md`.
 
-**Verify (1 agent, fresh, blind)** — [../briefs/baseline-verifier.md](../briefs/baseline-verifier.md).
-Given the facts with anchors and nothing about how they were found, it confirms each against the code:
-`confirmed`, `wrong` (with the correct statement and anchor) or `unsupported`. Wrong facts are corrected
-from its evidence (re-anchored and re-checked by the script); unsupported ones are dropped or re-derived
-once. Facts written with no second agent available are marked `(unverified)` at the end of the line.
+## 6. Keeping it true while the code moves
 
-## 5. Keeping it true while the code moves
+`bf.py anchors <home>` compares each fact with the code now:
 
-The header records the commits. On every later run, `bf.py anchors <home>` compares them with each
-repo's current `HEAD` and lists the anchored files that changed since. A fact whose anchored file
-changed is re-checked by the snippet; where the snippet is gone or moved far, the fact is **stale**:
-`status` names it; a write run re-verifies stale facts that its work depends on (one verifier dispatch),
-and `ready` re-verifies all of them. A stale fact that turns out wrong takes any `CH`/`KEEP`/default
-citing it back to a finding for the grill.
+- **stale** — the file is gone, the snippet is gone, or it moved far: the fact may be wrong. A write run
+  re-verifies stale facts its own work depends on (one verifier dispatch); `ready` re-verifies all.
+- **recheck** — the file changed since the recorded commit but the snippet is still there: probably fine,
+  but the logic around it may have moved. `ready` sends these to the verifier too.
+- New code can change behaviour without touching an anchored file (a new migration, a new server function
+  on a touched table): the verifier at `ready` searches for new writers and readers of the touched records
+  since the recorded commit (`git log --since`, `git diff --name-only <commit>..HEAD`).
 
-## 6. Questions about the product are never asked of the owner
-
-A finding whose answer is in the code is answered from the code: the orchestrator (or the router agent)
-reads it, writes the `B-n` fact, and the finding becomes a **product fact** disposition
-([dispositions.md](dispositions.md)). Asking the owner how their own app works today wastes their
-attention and invites a guess where the code is certain.
+After a verification, rewrite the header's repo lines to the current commits and update `FEATURE.md`'s
+`Product:` line. A fact found wrong is struck; every `CH`, `KEEP` or default citing it becomes a candidate
+for the next grill.

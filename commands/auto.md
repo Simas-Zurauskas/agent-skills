@@ -1,32 +1,37 @@
-# auto — the owner delegates the whole loop
+# auto — the owner delegates the loop
 
-`auto [rounds]` runs `answer` → `resolve` → (delta grill, inside resolve) round after round, then `ready`.
-It exists for an owner who would rather veto than answer. Only a live invocation by the owner starts it
-(rules.md §1), and every answer it writes is labelled as delegated.
+`auto [rounds]` runs `answer` → `resolve` (with its delta grill) round after round, then `ready`. It is for an
+owner who would rather veto than answer. Only a live invocation by the owner starts it, and every answer it
+gives is labelled as delegated ([../reference/rules.md](../reference/rules.md) §1).
+
+**What keeps it safe:** a delegated answer never grounds another delegated answer — questions that arise from
+text a delegated answer wrote are left for the owner ([answer.md](answer.md) W2); a delegated answer never
+changes or removes an existing line ([resolve.md](resolve.md) R2); and `ready`'s stamp says *pending your
+review* until the owner accepts what was decided for them.
 
 ## The loop
 
-1. Record chat answers in the invocation first.
-2. **Round** (at most `rounds`, default 3):
-   1. [answer.md](answer.md) over every `Open` row.
+`auto` opens one log entry and runs each command's phases inside it (embedded commands pass `--self` to the
+lock, and share the entry and the report). It records chat answers in the invocation first.
+
+1. **Round** (at most `rounds`, default 3):
+   1. [answer.md](answer.md) over the `Open` rows (rows left before and unchanged are skipped).
    2. [resolve.md](resolve.md) — applies the owner's and the delegated answers, then grills what changed.
-   3. Stop the loop when this round wrote **no new question** that `answer` could take, or when every
-      `Open` row is one `answer` left on a hard limit.
-3. If no `Open`, `Answered` or `Flagged` row remains, run [ready.md](ready.md). Its new questions, if any,
-   get one more `answer` → `resolve` pass, then `ready` once more. Never more than one such extra pass.
-4. Each command opens and closes its own log entry; `auto` adds a `note` line to each naming the round.
+   3. **Stop the loop** when this round answered nothing new — every `Open` row left is one only the owner
+     can take — or wrote no new question.
+2. **`Flagged` rows stop the loop before `ready`**: they are the owner's, listed first in the reply.
+3. If no `Open`, `Answered` or `Flagged` row remains, run [ready.md](ready.md). If `ready` writes new
+   questions, one more `answer` → `resolve` pass, then `ready` once more — never more than one such pass.
+4. Heartbeat `note round n` lines; one `closed` line at the end.
 
-## The reply
+## The reply — one report for the whole loop
 
-One report for the whole loop, not one per command:
-
-1. **Verdict** — *Ready for planning* or *Not ready — n questions need you*.
-2. **Questions only you can answer** — the left rows, each with its reason and recommended direction.
-3. **What I decided on your behalf** — every delegated answer (owner's list first) and every default,
-   one line each, numbered for veto: *"say "q-4: …" or "drop D3" to change any of these."*
+1. **Verdict** — *Ready for planning (pending your review)* or *Not ready — n questions need you*.
+2. **Questions only you can take** — each with why it was left and its recommended direction, if any.
+3. **What I decided for you** — every delegated answer (owner's-list ones first) and every default, one line
+   each, numbered for veto: *"say "accept", or "q-4: …" / "drop D3" to change any."*
 4. **What changed in the feature** — counts, and the parts most affected.
-5. Agents dispatched and anything unverified.
+5. Agents dispatched, anything unverified, anything flagged.
 
-**Stopping rules.** A round that writes nothing stops the loop. A flagged row stops nothing but is listed
-first. If the owner interrupts, the current command finishes its in-flight write, logs `paused`, and the
-next invocation continues from the files.
+If the owner interrupts, the command in progress finishes its current write, logs `paused`, and the next
+invocation continues from the files.

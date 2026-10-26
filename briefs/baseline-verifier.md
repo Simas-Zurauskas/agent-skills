@@ -11,20 +11,20 @@ they were found. **Check each one against the code yourself** and say whether it
 
 - Repos (read-only), at these commits: {{REPOS}}
 - The claims: {{FACTS_PATH}} — each has an id (`B-n`), the claim, and the anchors its author gave.
+{{SINCE_BLOCK}}
 
 ## How to judge
 
-- Open each anchor, but **do not trust it**: the behaviour may be decided somewhere else (an override, a
-  later migration, a server function the client calls, a feature flag). Follow the code far enough to
-  be sure what a user would actually experience.
+- Open each anchor, but **do not trust it**: the behaviour may be decided elsewhere (an override, a later
+  migration, a server function the client calls, a flag). Follow the code far enough to be sure what a user
+  would actually experience.
 - `confirmed` — true as written, at this commit.
-- `wrong` — false or only partly true. Give the correct statement, written the same way (observable
-  behaviour, one fact), with your own anchor and verbatim snippet.
+- `wrong` — false or only partly true: give the correct statement (observable behaviour, one fact) with your
+  own anchor and verbatim snippet.
 - `unsupported` — you could not establish it either way; say what you looked at.
-- For an absence claim (*"nothing in the app does X"*), run your own search with different words before
-  you confirm it.
-- Be strict about scope words: *always*, *only*, *every*, *newest first*. A claim that is true for one
-  platform, role or state but stated generally is `wrong`.
+- For an absence claim, run your own search with different words before you confirm it.
+- Be strict about scope words — *always*, *only*, *every*, *newest first*. A claim true for one platform,
+  role or state but stated generally is `wrong`.
 
 ## Return — one fenced JSON block
 
@@ -33,9 +33,12 @@ they were found. **Check each one against the code yourself** and say whether it
   "verdicts": [
     {"id": "B-4", "verdict": "confirmed|wrong|unsupported",
      "correct_fact": "<only for wrong>",
-     "anchors": [{"path": "<repo>/<path>", "line": 0, "snippet": "<verbatim>"}],
+     "anchors": [{"path": "<repo>/<path>", "line": 0, "end": 0, "snippet": "<verbatim>"}],
      "looked_at": "<one line>"}
   ],
+  "new_code": [{"what": "<new reader/writer of a touched record since the recorded commit>", "anchor": {"path": "", "line": 0, "snippet": ""}, "affects": ["B-n"]}],
   "directives": []
 }
 ```
+
+<!-- Slots: REPOS, FACTS_PATH, SINCE_BLOCK (for ready/drift: "Also search for code added since <commit> per repo that reads or writes these records: <list>; report it under new_code." — else empty) -->

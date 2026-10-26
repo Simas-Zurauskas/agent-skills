@@ -1,68 +1,73 @@
 # resolve — write the answers into FEATURE.md
 
-Takes every `Answered` row and writes it into the lines it decides, with one agent drafting each change
-and a second, independent agent checking it. Runs to the end. By default **an answer supersedes text it
-contradicts** (quoted on a provenance line); `resolve soft` ends such a row `Flagged` with both texts
-and writes nothing for it. Then grills what changed. Read [../reference/rules.md](../reference/rules.md).
+Takes every `Answered` row, drafts the exact change that writes it in, has a second, independent agent check
+each change, commits them one at a time, then grills what changed. Runs to the end. Read
+[../reference/rules.md](../reference/rules.md) (§1 overrules, §3 supersession).
 
 ## R1 — Load the queue
 
-SKILL.md's five checks; open the entry; record chat answers first ([../reference/record.md](../reference/record.md)
-§5) — they join the queue. Queue every `Answered` row. Per row, mechanically:
+SKILL.md's checks; open the entry; save the invocation; record chat answers first
+([../reference/record.md](../reference/record.md) §5) — they join the queue. Reconcile the owner's edits
+(`bf.py changed`). Queue every `Answered` row. Per row, mechanically:
 
 - **Empty answer** → not queued; report it.
-- **Doesn't answer the question asked** (names none of the directions, states no behaviour) → `Flagged`,
+- **Doesn't say which way** (names no direction and states no behaviour) → `Flagged`,
   `Why flagged: the answer does not say which way — <what is missing>`.
-- **Blocked** — its answer depends on a row still `Open` → stays queued for later; say which.
-- **Text it touches changed since the row was answered** by someone other than a run (rules.md §3) → the
-  writer gets the current text; nothing is overwritten blind.
+- **Blocked** — depends on a row still `Open` → stays `Answered`; say which.
+- **An overrule** of an already-applied answer → the queue item covers every line whose provenance names
+  that row, and every row whose `Why asked` cites one of those lines.
 
-Order the queue so a row whose answer others depend on goes first.
+Order the queue so a row others depend on goes first. `bf.py anchors <home>`: a stale fact that a `Today`
+half in the queue's lines cites goes to one verifier before drafting.
 
-## R2 — Write the deltas (1 writer per ≤5 rows, concurrent)
+## R2 — Draft the deltas (the orchestrator)
 
-Brief: [../briefs/resolve-writer.md](../briefs/resolve-writer.md). Per row the writer returns the exact
-change: which IDs it edits (new text, whole line), which it adds (next free numbers — the orchestrator
-gives the writer the next free `FR`/`CH`/`KEEP` numbers), which markers it removes, which defaults it
-replaces, and the provenance line. Rules it must follow:
+For each row, draft the exact change, following [../reference/feature-shape.md](../reference/feature-shape.md):
 
-- Everything written follows from the answer, the document and the baseline — **nothing the answer
-  does not state**. A part the answer leaves open becomes a narrower marker `→ asked next run`.
-- An answer that states a new behaviour may add a new `FR`; an answer that changes what users have today
-  writes a `CH` citing the baseline fact.
-- An answer contradicting a line supersedes it: the line is rewritten and the old text quoted on the
-  provenance line. An answer contradicting the owner's own sourced words (not a run's draft) is
-  **flagged** instead — two of the owner's statements disagree, and only they can say which holds.
-- A delegated answer that contradicts a `FEATURE.md` line is flagged, never applied over it.
+- **Only what follows from the answer** (plus the document and baseline it rests on). A part the answer
+  leaves open becomes a narrower marker `→ asked next run`.
+- New behaviour → a new `FR`; a change to what users have today → a `CH` citing the fact; something that
+  must stay → a `KEEP`. Numbers from `bf.py ids --next <P> --count N`, taken once for the whole run.
+- An owner's answer that contradicts a line **supersedes** it: rewrite the line, the provenance quoting the
+  old text.
+- **A delegated answer adds lines and settles its own markers and defaults only.** A delegated delta that
+  would change or remove an existing `FR`, `CH`, `KEEP`, edge case, `Not doing` line or default is not
+  drafted: the row is `Flagged` (*my answer for you would change "<line>" — yours to decide*). This check
+  is the orchestrator's, mechanical: compare the delta's edits with the current file.
+- An answer already fully carried by the current text → no change; the row goes straight to `Applied`
+  quoting the line that carries it.
+- Provenance per feature-shape.md §8 (*delegated* rows say so). Remove every marker pointing at the row that
+  the answer settles; name defaults it replaces.
 
-## R3 — Check each delta, blind (1 checker per ≤5 rows, concurrent, a different model where available)
+Freeze each delta as `{q, answer, current lines verbatim, proposed edits and adds, markers removed, defaults
+removed}` in `work/<run-id>/deltas-<n>.json`.
 
-Brief: [../briefs/resolve-checker.md](../briefs/resolve-checker.md). The checker gets the question, the
-answer, the current lines and the proposed change — not the writer's reasoning — and returns per row:
+## R3 — Check each delta, blind (1 checker per ≤8 rows, concurrent, a different model where available)
+
+Brief: [../briefs/resolve-checker.md](../briefs/resolve-checker.md). The checker gets the question, the answer,
+the current lines and the proposed change — never the drafting reasoning — and looks for what is wrong:
 
 | Verdict | Meaning | Outcome |
 |---|---|---|
-| `clean` | Faithful to the answer, nothing extra, no contradiction elsewhere | Applied |
-| `patch` | A named clause goes beyond the answer, or a line elsewhere now contradicts it — with the exact fix | The fix applied once, then Applied |
-| `flag` | Cannot be written honestly: the answer is ambiguous, contradicts the owner's own words, or would need an invented decision | `Flagged`, with the checker's reason in `Why flagged` |
+| `clean` | Faithful to the answer, nothing extra, nothing dropped | Applied |
+| `patch` | A clause **inside the delta's own lines** goes beyond the answer or drops part of it — the exact replacement for those lines | The patch applied once, then Applied |
+| `flag` | Cannot be written honestly — the answer is ambiguous, would need a decision nobody made, or **a line outside the delta now contradicts it** | `Flagged`, the reason in `Why flagged`; a contradiction elsewhere also becomes a candidate for R5's grill |
 
-A `patch` the orchestrator cannot apply cleanly → `flag`. One retry of the whole pair for a row the writer
-got structurally wrong; then flag. With no checker available: written `unverified`, counted, reported.
+A patch never touches a line outside the delta. Under-promising is not a defect: a delta that writes less
+than a looser reading of the answer, but all the answer certainly says, is `clean`. No checker available →
+written with `- **Unverified:** yes` on the row and `(unverified)` on the provenance line, counted and reported.
 
 ## R4 — Commit, one row at a time
 
-For each row in queue order: re-read `FEATURE.md`; if a line the delta touches changed since R1, flag the
-row (*changed while I worked*); else write the delta, read back, remove the markers it settles (route 1),
-set the row to `Applied` with today's date in the row, and log `applied q-NN · <IDs> · depth n` (depth =
-the question's depth + 1). `Flagged` rows: set status and `Why flagged`, log `flagged`.
-
-Then `bf.py ids <home> --sync`; regenerate the `Open questions` block; clear any `Ready for planning`
-stamp.
+In queue order: re-read `FEATURE.md`; if a line the delta touches changed since R1 **by anyone but this run**,
+flag the row (*changed while I worked*); else write the delta, read back, remove the markers it settles
+(route 1), set `Status: Applied` and add `- **Applied:** <date>` under the answer, and log
+`applied q-NN · <IDs> · depth n` (n = the row's `Depth` + 1). `Flagged` rows: status, `- **Why flagged:** …`
+under the answer, `flagged` line. Then `bf.py ids --sync`, regenerate `Open questions`, status line to `Draft`.
 
 ## R5 — Grill what changed, then close
 
-The delta grill over the lines this run wrote (2 passes) — the derivative round. Its candidates are
-depth 2 or more; depth-3 candidates never become questions (grill.md §4). Then
-[questions.md](questions.md) G3–G6. Reply: what was applied (by question, one line each, naming the
-lines it changed), what was flagged and why, new questions if any, next step (*`ready` when nothing is
-open*).
+The delta grill (2 passes) over the lines this run wrote — the derivative round (grill.md §4 bounds its depth).
+Then [questions.md](questions.md) G3–G6. Reply: what was applied, one line per question naming the lines it
+changed (superseded lines old → new); what was flagged and why; new questions; next step (*`ready` when nothing
+is open*). Report, snapshot, `closed`.
