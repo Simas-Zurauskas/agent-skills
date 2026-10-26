@@ -18,8 +18,9 @@ Leave a row now, with its reason, when:
 - a **hard limit** applies (§4);
 - **it depends on another row still `Open`** (its `Depends on` field) — unless that row was answered by the
   owner in this same invocation, in which case it is drafted in a second wave after the first is recorded;
-- **it arose from a delegated answer** — its `Why asked` cites a line whose provenance says *delegated*
-  (*built on an answer I gave for you — yours to decide*);
+- **it arose from a delegated answer** — its `Why asked` cites a line whose provenance says *delegated* — and
+  it is on the owner's list (§3), or the drafter can answer it only on ground 4 or 5 (*built on an answer I
+  gave for you — yours to decide*). Such a row goes to the drafter marked `grounds 1–3 only`;
 - **the owner answered the same decision before** and a later row reopened it;
 - **the sources disagree** on it.
 
@@ -104,4 +105,5 @@ for how long.
 - anything about minors' data; anything on the *Always ask* list;
 - sources that disagree;
 - an answer that would change or remove an existing line in `FEATURE.md` (`resolve` would flag it anyway);
-- a row that depends on an open row, or arose from a delegated answer (W2).
+- a row that depends on an open row; a row that arose from a delegated answer and is on the owner's list, or
+  would need ground 4 or 5 (W2).

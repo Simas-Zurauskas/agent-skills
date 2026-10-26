@@ -4,8 +4,9 @@
 owner who would rather veto than answer. Only a live invocation by the owner starts it, and every answer it
 gives is labelled as delegated ([../reference/rules.md](../reference/rules.md) §1).
 
-**What keeps it safe:** a delegated answer never grounds another delegated answer — questions that arise from
-text a delegated answer wrote are left for the owner ([answer.md](answer.md) W2); a delegated answer never
+**What keeps it safe:** a delegated answer never grounds another delegated judgement — questions that arise from
+text a delegated answer wrote are answered for the owner only on evidence (grounds 1–3) and never when they are on
+the owner's list ([answer.md](answer.md) W2); a delegated answer never
 changes or removes an existing line ([resolve.md](resolve.md) R2); and `ready`'s stamp says *pending your
 review* until the owner accepts what was decided for them.
 

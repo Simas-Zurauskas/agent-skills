@@ -116,3 +116,13 @@ A second cold executor review, of v2 (42 findings, 6 blockers). The ones that ch
 - `Depends on` field; `add` closes the rows its material settles; *ask it better* rows are not duplicates;
   a vetoed KEEP default becomes a tombstone; `Added Fn` provenance; recheck clears via verified hashes;
   `rowhash`; concrete model rule; an early-stopping `ready` closes its entry; `auto` snapshots per round.
+
+## v4 — 2026-10-26
+
+The second simulation (v2: `init` then `auto` on favourite challenges) ran clean — 11 questions at init, 8
+answered for the owner and checked, every change checked — but `auto` stopped after two rounds with 9 questions
+for the owner, six of them follow-ups of its own delegated answers. v2's rule (a delegated answer never grounds
+another delegated answer) stopped evidence-settled follow-ups along with judgement ones. Now a follow-up may be
+delegated on evidence only (grounds 1–3), never on judgement (4–5) and never on the owner's list. The chain is
+still bounded by the depth cap. (The sim's q-17, a screen-reader question, came from the sandbox not loading the
+owner's memory — in real use the *Never raise* list filters it.)

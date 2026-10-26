@@ -37,7 +37,7 @@ for the change. Never widen scope.
 
 A figure (price, %, count, duration) nobody gave · which law applies or what it requires · minors' data · an
 *Always ask* topic · sources that disagree · an answer that would change or remove an existing spec line · a
-question that depends on another still-open question or that arose from an earlier answer given for the owner.
+question that depends on another still-open question · a question marked `grounds 1–3 only` (it arose from an earlier answer given for the owner) that grounds 1–3 do not settle.
 
 ## Tests every answer passes (one line each)
 

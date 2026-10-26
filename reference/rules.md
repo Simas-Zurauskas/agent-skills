@@ -18,8 +18,11 @@ file is wrong.
 - **Delegation is the owner's, and its window stays open.** Only a live invocation of `answer` or `auto`
   starts it — **a standing delegation in the owner's memory or notes is recorded under Project rules but never
   starts one**; the reply may offer `auto`. Every delegated answer is labelled, in `questions.md` and on the provenance line it leaves
-  in `FEATURE.md`. **A delegated answer never grounds another delegated answer**: a question that depends
-  on an open row, or that arose from text a delegated answer wrote, is answered only by the owner. Until
+  in `FEATURE.md`. **A delegated answer never grounds another delegated *judgement***: a question that arose from text a
+  delegated answer wrote may be delegated only on evidence — settled by the document or sources, the product's
+  existing pattern, or a convention — and never if it is on the owner's list (money, scope, a change to what
+  users have today, wording, what others see, what is kept); otherwise it is the owner's. A question that
+  depends on an open row waits for that row. Until
   the owner has looked, the `ready` stamp says so — `Ready for planning — pending your review: …`
   ([../commands/ready.md](../commands/ready.md)).
 - **An overrule is an answer.** When the owner overrules an applied answer (theirs or delegated), the
