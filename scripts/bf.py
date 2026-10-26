@@ -59,7 +59,7 @@ B_DEF = re.compile(BULLET + r"(?:~~)?\**B-(\d+)\**\s+[—–-]\s")
 B_REF = re.compile(r"\bB-(\d+)\b")
 DEFAULT_DEF = re.compile(BULLET + r"(?:\**(?:FR|CH|KEEP)-\d+\**\s+[—–-]\s+)?Default\b")
 DEFAULT_OK = re.compile(
-    r"\bDefault D(\d+) \((existing pattern|keeps today's behaviour|standard practice|chosen design)\b.*?"
+    r"\bDefault D(\d+) \((existing pattern|keeps today's behaviour|standard practice|chosen design|simplest fit)\b.*?"
     r"adopted (\d{4}-\d{2}-\d{2})(, unverified)?\):")
 SLOT_DEF = re.compile(BULLET + r"(Copy|Content|Design) slot\b", re.I)
 SLOT_OK = re.compile(r"\b(Copy|Content|Design) slot S(\d+) —")

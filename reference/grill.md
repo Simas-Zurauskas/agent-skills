@@ -29,11 +29,10 @@ it. **An empty pass is a success.**
 ## 2. The lenses
 
 **Lens 1 — the builder who must not guess.** Walk each line as if implementing it tomorrow with the
-codebase open, forbidden from deciding anything **the owner owns**: scope, money, what users see or are
-promised, wording, what is kept or shown to others, legal posture. Every place you would have to stop and
-ask the owner is a candidate. Where the code shows how the product behaves **today**, that is a `product`
-fact; where you would follow the product's own pattern or the trade's convention for something that is
-not the owner's call, a `default`.
+codebase open. Every place you would have to guess is a candidate. Most are closed by the run itself —
+where the code shows how the product behaves **today**, a `product` fact; otherwise a `default` on the
+strongest ground (the product's pattern, keeping today, the chosen design, a convention, or simplest fit),
+**with the text to write**. Only a gap on the serious list ([rules.md](rules.md) §4) is the owner's.
 
 **Lens 2 — the hostile tester.** Attack each `FR`, `CH`, `KEEP`:
 - **two drafts** — write both behaviours the sentence could mean; where they diverge observably, that is
@@ -47,9 +46,11 @@ not the owner's call, a `default`.
 **Lens 3 — collision with the existing product.** For every surface, record and flow in the baseline and
 every item in its blast radius:
 - does `FEATURE.md` say what happens to it — a `CH` or a `KEEP`? A touched thing with neither is a
-  candidate. It may become a `KEEP` default only where no requirement changes its inputs or what it shows;
+  candidate — usually closed by the run as a `KEEP` default, or a `CH` default where the request necessarily
+  changes it;
 - where this feature and an existing one act on the same record or screen, which wins and what does each
-  actor see? **A real collision is a question** unless the owner's words already settle it;
+  actor see? The run decides it (pattern, keeping today, simplest fit) — a question only if it is serious
+  (it takes away what users have, widens who sees what, …);
 - does any line break a project rule, an invariant or a contract?
 - **search past the baseline**: grep the code for consumers of what the feature touches (share images,
   notifications, home summaries, marketing pages, background jobs). A missed consumer is a candidate and a
@@ -64,10 +65,13 @@ switching the feature off or pulling it, and what happens to what users made wit
 compatibility table ([feature-shape.md](feature-shape.md) §9) is filled. A state is a candidate only where
 the product makes it reachable and two behaviours differ in what someone sees or is promised.
 
-**Lens 5 — who it is for, and what done looks like.** Reconcile `Who` against the requirements both ways:
-an actor no requirement serves; an actor the requirements name that `Who` does not; a job no requirement
-delivers. Empty and first-run states; discoverability (how does anyone learn the feature exists?); scale
-— one item, many, the most a real user has (read limits from the code).
+**Lens 5 — does the feature add up?** Walk **each actor end to end**: discovering the feature, first use,
+everyday use, changing their mind, the thing going away (closed, deleted, left), and coming back — on each
+surface the feature touches. Every step must be carried by a line; a step with none is a gap to close.
+Reconcile `Who` against the requirements both ways (an actor no requirement serves; an actor named but not in
+`Who`; a job no requirement delivers). Empty and first-run states; scale — one item, many, the most a real
+user has (read limits from the code). Every value a requirement uses is produced somewhere; every state the
+feature creates has a way in and a way out.
 
 ## 3. Sweeps — *which of these does no line cover?*
 
@@ -100,7 +104,7 @@ permissions on records other people share.
 - **Depth.** `resolve` grills the lines it just wrote (the derivative round) — that is allowed. What is
   bounded is the chain: a candidate of **depth 3 or more** (grounded in a line written from an answer to a
   question that itself came from an answer — [feature-shape.md](feature-shape.md) §8) is not written as a
-  question **unless it is on the never-list, changes existing behaviour, or is a contradiction** — those stay
+  question **unless it is serious or a contradiction** — those stay
   questions at any depth. Others become a default if eligible, a rabbit hole, or a discard; `ready` lists
   every depth-capped discard in its reply.
 - **Repeat round** only when the owner asks; two rounds is a budget, never a completeness claim.

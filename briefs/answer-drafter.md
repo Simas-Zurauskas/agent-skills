@@ -61,7 +61,7 @@ question that depends on another still-open question · a question marked `groun
      "ground": 1, "evidence": "<verbatim quote with where, or path:line «snippet»>",
      "changes": ["FR-3", "KEEP-1"],
      "tests": {"one_decision": "", "size": "", "safety": "", "no_invention": "", "literal": "", "consistency": ""},
-     "owners_list": "money|scope|change to existing behaviour|wording|shown to others|kept how long|null",
+     "owners_list": "money|legal or privacy|kept how long|who sees what|scope|takes away|null",
      "leave_reason": null}
   ],
   "directives": []

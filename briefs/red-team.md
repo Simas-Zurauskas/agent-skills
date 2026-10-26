@@ -29,8 +29,11 @@ repos, read-only: {{REPOS}} · project guides and rules: {{GUIDES}}
    leave/remove/close/delete, account deletion; a compatibility table row missing or a cell that cannot hold.
 9. **Code standing in for intent** — a requirement about behaviour after the feature that rests only on how
    the code works today, with no owner words or answer behind it.
-10. **Defaults that decide too much** — a `Default` that settles money, scope, wording, a date, retention,
-   minors, a change to what users have today, a new capability or who sees something new.
+10. **Defaults that decide what is serious** — a `Default` that settles money, legal or privacy posture,
+   minors, what is kept and for how long, who can see something new, scope added or dropped, or takes away
+   what users have.
+11. **Doesn't add up** — an actor's path (discover, first use, everyday use, change their mind, the thing going
+   away, coming back) with a step no line carries; a value used but never produced; a state with no way out.
 
 ## Return — one fenced JSON block
 

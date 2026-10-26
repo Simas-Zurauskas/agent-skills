@@ -45,7 +45,7 @@ settles it makes it a FIX. Every discard goes into the report with its evidence 
 
 ## G4 — Route, blind
 
-1. Apply the gate (§3) and give each survivor a first routing with its evidence. Run the never-list scan
+1. Apply the gate (§3) and give each survivor a first routing with its evidence. Run the serious-list scan
    (§4) on every candidate.
 2. Dispatch the routers ([../briefs/router.md](../briefs/router.md)), ≤15 candidates each, without the first
    routing. Combine by §4.

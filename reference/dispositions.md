@@ -1,14 +1,15 @@
 # Dispositions — what happens to every finding
 
 Every candidate the grill returns ends in **exactly one** disposition, decided before anything is written.
-**A question is the rarest of them**: each costs the owner real attention, and a question the code, the
-document or a convention already answers is review work made out of nothing.
+**A question is the rarest of them, and only for what is serious** ([rules.md](rules.md) §4): the run owns the
+feature's ordinary calls and decides them itself, labelled and vetoable. What it must get right is that the
+feature adds up and nothing is missing — a gap is something to close, not something to hand back.
 
 | Disposition | When | What is written |
 |---|---|---|
 | **PRODUCT** | The gap is about **current behaviour** and the code answers it ([rules.md](rules.md) §4) | A `B-n` fact in `baseline.md` (anchor-checked by `bf.py anchors`, confirmed by the router), and a `Today`/`KEEP` line citing it where the feature needs it; a marker it settles is removed (route 6) |
 | **FIX** | Existing text is wrong, stale or inconsistent, with a winner checkable by quote: a source, a baseline fact, an applied answer, or the document's own other text | The replacement, with `*(Corrected Fn, <date> — was: "…")*`; a ledger line; vetoable (*"undo F2"*) |
-| **DEFAULT** | rules.md §4's four conditions hold and nothing on the never-list is touched | A `Default Dn (…)` line where it bites ([feature-shape.md](feature-shape.md) §5) and its ledger line |
+| **DEFAULT** | Not serious, and rules.md §4's conditions hold — the run's call, on a cited ground (simplest fit when nothing stronger applies) | A `Default Dn (…)` line where it bites ([feature-shape.md](feature-shape.md) §5) and its ledger line |
 | **SLOT** | The answer is content someone will supply — wording, a design, a list | A `Copy`/`Content`/`Design slot Sn` line and its ledger line |
 | **QUESTION** | Passes the gate (§3) | A `q-NN` row in `questions.md`, with a marker where it bites |
 | **DISCARD** | A named filter (§2), with its evidence | A `discard` entry in the run report: filter, evidence, one-line counter-case |
@@ -64,9 +65,10 @@ A candidate becomes a QUESTION only if **all three** hold, and its `Why asked` n
 
 1. **Delta.** Two plausible answers produce two different lines in `FEATURE.md` (`two_answers`). Same line
    with a different adjective → no question.
-2. **Only the owner can settle it** — a product choice, scope, money, legal posture, wording, a promise to
-   users, what is kept or shown to others, a change to what users have today, or a fact only the owner has
-   (or can find out — *"what does the store require for …?"*). Not the code, not a convention.
+2. **It is serious** — on the serious list in [rules.md](rules.md) §4 (money · legal, privacy, safety,
+   minors · what is kept and for how long · who can see what · scope added or dropped · taking away what
+   users have · the owner's words disagree or a fact only they have · *Always ask*). Name the list item and
+   why it applies. **Anything else the run decides**, however much the owner might have an opinion on it.
 3. **Something stays unwritable until it is answered** — name the requirement, `CH`, `KEEP`, edge case,
    table cell or block that stays blank or marked.
 
@@ -79,33 +81,33 @@ other dispositions.
 
 ## 4. The blind router — a second agent re-derives every disposition
 
-**Before dispatch, the never-list scan (mechanical, case-insensitive, on each candidate's `gap` and
+**Before dispatch, the serious-list scan (mechanical, case-insensitive, on each candidate's `gap` and
 `two_answers`).** A hit is any of: *price, fee, pay, paid, refund, charge, subscription, cost* · *law, legal,
-regulation, GDPR, compliance, store policy, terms* · *child, minor, age, under 1* · *day, days, week, hour,
-minute, deadline, window, expire, after N, until, retention, keep for, delete after* · *wording, text, label,
-copy, message says, call it* · *today, currently, instead of, no longer, change how, replace* · *notify,
-notification, push, email, badge* · *permission, allow, role, admin, who can* · *visible, see, shown to,
-share, public, private* · *offline, queue, sync, new state* · every *Always ask* topic's words. Hits travel
-with the candidate; a hit is a reason for the router to look twice, not a verdict.
+regulation, GDPR, consent, compliance, store policy, terms, privacy* · *child, minor, age* · *retention, keep
+for, delete after, purge, stored for* · *visible to, shown to, others see, public, share with* · *remove,
+no longer, stop showing, take away, drop the* · *not asked, beyond the request* · every *Always ask* topic's
+words. Hits travel with the candidate; a hit is a reason for the router to look twice, not a verdict.
 
 Brief: [../briefs/router.md](../briefs/router.md). **At most 15 candidates per router**, routers concurrent.
-Each candidate goes with its grounding, `two_answers` and never-list hits — **never with the first routing**.
+Each candidate goes with its grounding, `two_answers` and serious-list hits — **never with the first routing**.
 The router reads the code to check PRODUCT claims and returns its own outcome and evidence.
 
 **Combining the two verdicts:**
 
-- **Both agree** → that disposition (a DEFAULT with a never-list hit only if the router named why the list
-  does not reach it).
-- **Either says QUESTION** → QUESTION, *unless* the other side's evidence is **mechanically verified** —
-  a quote that matches (*already answered*, FIX), an anchor that checks out for a gap about current
-  behaviour (PRODUCT), or an **`existing pattern` DEFAULT** whose pattern anchor checks out, with all four
-  attestations and no never-list hit. A `standard practice` default never overrules a QUESTION: fail open to
-  asking.
+- **Both agree** → that disposition (a DEFAULT with a serious-list hit only if the router named why the
+  item does not apply).
+- **Either says QUESTION and names a serious-list item that applies** → QUESTION, *unless* the other side's
+  evidence is **mechanically verified** — a quote that matches (*already answered*, FIX) or an anchor that
+  checks out for a gap about current behaviour (PRODUCT). Fail open to asking — on serious matters only.
+- **A QUESTION verdict that names no serious item that applies** is not a question: the gap is decided as a
+  DEFAULT — the other side's proposed text, or the simplest-fit text the QUESTION side's `two_answers`
+  imply — with both verdicts on its ledger line.
 - **Both non-question but different** → PRODUCT if either has a verified anchor on a current-behaviour gap;
-  else DEFAULT if one side proposed default text that passes the never-list; else QUESTION.
+  else the DEFAULT with the stronger ground (existing pattern > keeps today > chosen design > convention >
+  simplest fit), its alternative noted on the ledger line.
 - **A vetoed default's gap** → QUESTION, whatever the verdicts.
 - **No router available** → the first routing stands, marked `unverified` ([rules.md](rules.md) §5) — except
-  that a never-list hit or a vetoed gap is a QUESTION.
+  that a serious-list hit or a vetoed gap is a QUESTION.
 
 ## 5. Drafting a question row
 
@@ -159,6 +161,7 @@ and returns:
 | `answered` | The settling text verbatim with where it sits (document, row, default, source), or — **for a gap about current behaviour only** — a code anchor; checked mechanically | Discarded on *Already answered* / *Current behaviour* / *Duplicate*, tagged `cold read` |
 | `irrelevant` | A §2 filter by name with that filter's evidence (a survey where the filter needs one) | Discarded on that filter, tagged `cold read` |
 | `simplify` | One-sentence rewording, one decision, not longer than the draft | Adopted in `Question` only. A bundle is split and each half re-disposed |
+| `decide` | It is not serious, and the reader gives the line to write and its ground | Written as a DEFAULT with that text (simplest fit unless a stronger ground is cited), tagged `cold read` on its ledger line |
 | `extend` | A wider wording that is still one decision, and the drafted siblings it absorbs | Adopted; absorbed siblings discarded as duplicates. A standing row is never rewritten — a merge goes to the reply |
 
 Per row it also returns **`directions`** (`ok`, or the missing option / wrong counter-case — adopted when
@@ -189,6 +192,6 @@ rows are written with `- **Unverified:** yes` and no Recommended line.
   (`` `repo/path:line` «snippet» ``) and checked with `bf.py anchors <home> --facts <that file>`.
 - **What G4 writes is not attack surface for the next delta grill** — it was routed blind already; only
   `ready` re-grills what its own disposal wrote.
-- **Sanity range, not a quota.** A first `init` usually writes 4–15 questions. Above `max(15, 2 × parts)`,
+- **Sanity range, not a quota.** A first `init` usually writes 0–6 questions. Above `max(6, parts)`,
   re-gate the batch once (some channel leaked); never discard for count, and say so if it stays high.
 - **Funnel** in the log and report: candidates → product → fix → default → slot → questions → discarded.

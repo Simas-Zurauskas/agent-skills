@@ -12,7 +12,7 @@ each one needs. You are not told what anyone else decided.
 **Read:** the spec {{FEATURE_PATH}} · the product today {{BASELINE_PATH}} (with the project rules, *Always ask*
 and *Never raise*) · the questions already asked {{QUESTIONS_PATH}} · what is already adopted {{LEDGER_PATH}} ·
 the owner's material {{SOURCES_DIR}} · the repos, read-only: {{REPOS}}
-**Candidates:** {{CANDIDATES_PATH}} — each with its gap, grounding, two possible answers, and any never-list
+**Candidates:** {{CANDIDATES_PATH}} — each with its gap, grounding, two possible answers, and any serious-list
 hits found mechanically.
 
 ## The outcomes — exactly one per candidate
@@ -21,9 +21,9 @@ hits found mechanically.
 |---|---|---|
 | `PRODUCT` | The gap is about **how the product behaves today**, and the code decides it. **Never** for what the product should do after the feature | `path:line` + verbatim snippet you checked |
 | `FIX` | A spec line is wrong or stale, and a source, a product fact or another spec line proves the right text | The proving quote and the exact replacement |
-| `DEFAULT` | All four hold: (a) the product's own pattern for the same kind of thing, keeping today's behaviour, a design the owner named as chosen, or a convention any competent team follows the same way; (b) nothing the owner owns turns on it; (c) reversible without breaking a promise to users; (d) no fact only the owner has is needed. **Never** for: money, legal applicability, final wording, scope, dates or durations, retention or deletion of what users made, minors, **a change to what users have today**, a new capability, channel or state, who can see something new, or an *Always ask* topic. **Keeping today's behaviour** is a default only where no requirement changes that behaviour's inputs or what it shows; where this feature and an existing one act on the same record or screen and the owner's words do not settle which wins, it is a `QUESTION`. For a candidate with a never-list hit, `DEFAULT` only if you say why the hit does not apply | Ground (`existing pattern` with its anchor, `keeps today's behaviour` with the fact it keeps, `chosen design` with its frame, or `standard practice`), the proposed line, one clause per condition |
+| `DEFAULT` | It is **not serious** (list below) and the spec does not settle it: the run decides it. Ground, strongest first: the product's own pattern for the same kind of thing · keeping today's behaviour · a design the owner named as chosen · a convention any competent team follows · **simplest fit** — the option that delivers what the owner asked with the least to build, the fewest new promises and the least change to what users have, adding nothing unasked. Conditions: (a) that ground; (b) not serious; (c) reversible — a later veto costs a change, not lost user data or a broken promise; (d) no fact only the owner has is needed. Where this feature and an existing one act on the same record or screen, decide which wins on the same grounds | Ground (with its anchor, the fact it keeps, the frame, or — for simplest fit — the option passed over), the proposed line, one clause per condition |
 | `SLOT` | The answer is content someone will supply (wording, a design, a list) | What, its shape, who supplies it |
-| `QUESTION` | Only the owner can settle it, the two answers give two different spec lines, and a named line stays blank until answered | The owner-only decision and the blank line |
+| `QUESTION` | It is **serious**, the two answers give two different spec lines, and a named line stays blank until answered | **Which serious item applies and why**, and the blank line |
 | `DISCARD` | One of the filters below, with its evidence | Filter name and evidence |
 
 **Discard filters and their evidence:** *already answered* — quote the settling line, row or default ·
@@ -34,8 +34,9 @@ retention/deletion of what users make, or permissions on shared records) · *unr
 prevents it. **A survey** names the 2–3 nearest requirements, quotes each one's sentence, and states that no
 answer would change their pass/fail conditions.
 
-When unsure between `QUESTION` and something else and you cannot give the other outcome's evidence, say
-`QUESTION`. A candidate carrying two decisions: say so in `split`.
+**Serious** means one of: **money** (prices, fees, refunds) · **legal, privacy or safety posture** (which rules apply, consent, minors) · **what is kept and for how long** (retention or deletion of what users made) · **who can see what** (making something visible to people who could not see it before) · **scope** (adding a capability the owner did not ask for, or dropping one they did) · **taking away what users have** (removing or breaking existing behaviour — reordering, extending or adding to a surface the request touches is not this) · **the owner's own words disagree**, or a fact only the owner has · an *Always ask* topic. Anything else is the run's to decide — say `DEFAULT` with the line to write,
+even when the owner might have an opinion. When unsure whether something is serious, say `QUESTION` and name
+the item you think applies. A candidate carrying two decisions: say so in `split`.
 
 ## Return — one fenced JSON block
 
@@ -44,7 +45,7 @@ When unsure between `QUESTION` and something else and you cannot give the other 
   "routes": [
     {"id": "A7", "outcome": "PRODUCT|FIX|DEFAULT|SLOT|QUESTION|DISCARD",
      "evidence": "<quote with where, or path:line «snippet»>",
-     "ground": "existing pattern|keeps today's behaviour|chosen design|standard practice|null",
+     "ground": "existing pattern|keeps today's behaviour|chosen design|standard practice|simplest fit|null", "serious": "<the serious item, for QUESTION>",
      "proposed_text": "<the default/fix/slot/keep line, or the question in ≤25 words>",
      "attestations": {"a": "", "b": "", "c": "", "d": ""},
      "filter": null, "survey": null, "split": null}

@@ -101,6 +101,7 @@ At the start of any command, save the owner's message to `work/<run-id>/invocati
 | *"q-3: 2"*, *"q-5 — no, keep it per person"* | That row's `Answer & why` = their words verbatim (string-matched against the saved message), plus the named direction's text: `2 — "<direction text>" (owner, in chat, <date>)`. Status → `Answered` |
 | *"reject q-6, not needed"* | `Rejected`, their reason verbatim. *Not needed* / *already decided* removes the marker (route 2); *ask it better* turns it back to `→ asked next run` |
 | *"close q-2"* | `Closed`, `- **Closed:** <date> — owner, in chat` |
+| *"D3: <their call>"* | A replacement decision for that default: recorded as the owner's answer to a new row for its gap (Status `Answered`), applied by the next `resolve` |
 | *"drop D3"*, *"undo F2"*, *"drop S1"* | The default/slot is removed, or the fix reverted to its quoted old text; the gap becomes a marker `→ asked next run (vetoed D3)`; `bf.py ids --veto D3`; the ledger line gains `· vetoed <date> — "<their words>"`; one `vetoed` line |
 | *"q-4 is wrong — …"* about an applied answer | A new answer on that row: Status → `Answered`; `resolve` rewrites the lines it wrote ([rules.md](rules.md) §1) |
 | *"accept"* / *"looks good"* after a `ready` that is pending review | Recorded by any write command (and only after reading it back from the saved message): the status line's pending-review clause is removed — **the one write to `FEATURE.md` that does not reset the status to Draft** — with one `ready` line naming what was accepted |
@@ -129,9 +130,10 @@ Short, plain, no phase codes or run ids. In this order, skipping empty parts:
 2. **Questions for you** — up to 10, impact order: `q-NN — the question` and `(recommended: n)` where one
    survived the cold read. Then: *"Answer here (e.g. "q-2: 1, q-5: no …"), in questions.md, or say `answer`
    and I'll answer what I safely can."*
-3. **Adopted on your behalf** — fixes and defaults that are not `KEEP`s, one line each, riskiest first; all
-   `keeps today's behaviour` defaults on **one** line (*"…and kept today's behaviour for D4, D6, D7"*). Then
-   *"say "drop D3" to undo one."*
+3. **Decided for you** — the calls the run made, one line each, the ones users will notice most first
+   (`simplest fit` and changes to a surface before conventions); all `keeps today's behaviour` defaults on
+   **one** line (*"…and kept today's behaviour for D4, D6, D7"*). Then *"say "drop D3" or "D3: <your call>" to
+   change one."* A reply with many of these and few questions is the intended shape.
 4. **Worth knowing** — rows already settled (*"close q-2"*), wiki drift, a test that disagrees with the code,
    unreleased behaviour a `CH` relies on, a contradiction in the sources, directives ignored.
 5. **Next step** — one line. Where the home was created, its path.

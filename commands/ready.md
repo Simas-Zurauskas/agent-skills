@@ -43,9 +43,10 @@ Every finding becomes a candidate — dry-run guesses as `lens: dry-run`, red-te
 — through [questions.md](questions.md) G3–G6. Faithfulness findings on text a run drafted and nobody has
 accepted are fixed in place; on text from the owner's words or an applied answer they become questions.
 
-**If D4 wrote anything into `FEATURE.md`** (a fix, a default, a product fact's line), that text has not been
-attacked: run the delta grill (2 passes) over it and dispose its findings — once. If that round writes again
-or writes a question, the verdict is *not ready*.
+**If D4 wrote anything into `FEATURE.md`** (a fix, a default, a product fact's line) — the usual case, since the
+run closes most of what the dry run and red team find itself — that text has not been attacked: run the delta
+grill (2 passes) over it and dispose its findings; repeat while a round still writes, **at most twice more**.
+A round that writes a question, or a third round that still writes, makes the verdict *not ready*.
 
 ## D5 — The verdict
 

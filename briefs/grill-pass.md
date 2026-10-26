@@ -31,16 +31,15 @@ different lenses; work **only your lenses**, one at a time, as separate frames.
 2. Is it a question about **how the product behaves today**, and does the code answer it? Give the anchor
    and snippet (`settled_by.kind = "product"`). **The code never settles what the product should do after
    the feature** — a gap whose two answers differ in post-feature behaviour is not settled by code.
-3. Does the product already handle the same kind of thing one way (a pattern — anchor it), or does one
-   convention any competent team follows settle it — and is it **not** money, legal, wording, scope, a date
-   or duration, retention, minors, a change to what users have today, a new capability/channel/state, or
-   who sees something new? (`"default"`). Keeping today's behaviour counts only where no requirement changes
-   that behaviour's inputs or what it shows — a real collision between this feature and an existing one is a
-   gap for the owner.
+3. Is it **not serious**? Then it is the run's to decide (`"default"`) — give the line to write and its ground:
+   the product's own pattern (anchor it), keeping today's behaviour, the chosen design, a convention, or
+   **simplest fit** (least to build, fewest new promises, least change to what users have, nothing unasked —
+   name the option passed over). **Serious** means: **money** (prices, fees, refunds) · **legal, privacy or safety posture** (which rules apply, consent, minors) · **what is kept and for how long** (retention or deletion of what users made) · **who can see what** (making something visible to people who could not see it before) · **scope** (adding a capability the owner did not ask for, or dropping one they did) · **taking away what users have** (removing or breaking existing behaviour — reordering, extending or adding to a surface the request touches is not this) · **the owner's own words disagree**, or a fact only the owner has · an *Always ask* topic.
 4. Is a line simply wrong or stale against the baseline or the sources? (`"fix"`).
 
-If one of these settles it, emit it with `settled_by` filled. Only what none of these settle is a gap for the
-owner. **Finding nothing is a fine result** — do not pad.
+If one of these settles it, emit it with `settled_by` filled. Only a serious gap is the owner's. **Your real
+job is completeness**: every step of every actor's path carried by a line, every value produced somewhere,
+every state with a way in and out. **Finding nothing is a fine result** — do not pad.
 
 ## Rules for a real gap
 

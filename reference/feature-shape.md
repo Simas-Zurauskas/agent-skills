@@ -58,10 +58,11 @@ A hedged quantity keeps its hedge word and gains a marker asking for the number.
 
 - **Every existing surface, record or flow a requirement touches has a `CH` or a `KEEP`** (lens 3, lint's
   coverage check). That is how this document says what the feature must not break.
-- A `CH` line's *Today* half cites a baseline fact; its *After* half comes from the owner's words or an
-  answer — never a default.
-- A `KEEP` cites the fact it keeps. It is sourced, or a default in the form above — only where no
-  requirement changes that behaviour's inputs or what it shows ([rules.md](rules.md) §4).
+- A `CH` line's *Today* half cites a baseline fact; its *After* half comes from the owner's words, an
+  answer, or — where the request necessarily changes that surface — the run's default making the smallest
+  change that delivers it. A change that takes away what users have is serious: a question
+  ([rules.md](rules.md) §4).
+- A `KEEP` cites the fact it keeps. It is sourced, or a default in the form above.
 
 ## 4. Not doing
 
@@ -80,9 +81,12 @@ One labelled sentence, one decision, in the block where it bites — as its own 
 - Default D6 (chosen design — rep-ui-lab themes F1, frame "pin list" — adopted 2026-10-26): the pin mark sits at the row's trailing edge.
 ```
 
-- **Grounds**, named in the label: `existing pattern` (cite the baseline fact or anchor — the strongest),
+- **Grounds**, named in the label, strongest first: `existing pattern` (cite the baseline fact or anchor),
   `keeps today's behaviour` (cite), `chosen design` (a design the owner named as chosen; cite file and
-  frame), `standard practice`.
+  frame), `standard practice`, and **`simplest fit`** — the run's own call when nothing stronger applies: the
+  option that delivers what the owner asked with the least to build, the fewest new promises and the least
+  change to what users have, naming the option it passed over:
+  `- Default D8 (simplest fit — over "pins also sync live to open screens" — adopted 2026-10-26): a pin made on one device shows on the others the next time their list loads.`
 - `Dn` numbers come from `bf.py ids --next D` and are never reused; *"drop D3"* is the owner's veto.
 - Add `, unverified` after the date when no second agent checked the routing.
 - Every default has a line in `record/defaults.md`: grounding, the four attestations, what owner-owned

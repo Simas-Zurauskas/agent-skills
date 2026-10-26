@@ -126,3 +126,27 @@ another delegated answer) stopped evidence-settled follow-ups along with judgeme
 delegated on evidence only (grounds 1–3), never on judgement (4–5) and never on the owner's list. The chain is
 still bounded by the depth cap. (The sim's q-17, a screen-reader question, came from the sandbox not loading the
 owner's memory — in real use the *Never raise* list filters it.)
+
+## v5 — 2026-10-26
+
+The owner's direction after reading the simulations: *"take a bit more ownership — no need to prompt so many
+questions or leave so much for a human to decide; it is not as important as the PRD; what we care about is
+that the whole feature adds up and nothing is missing; serious questions still go to the human."* The v2
+simulation's init had written 11 questions for a one-surface feature, most of them ordinary product calls.
+
+- **The run decides the feature's ordinary calls itself.** New default ground **simplest fit** (least to
+  build, fewest new promises, least change to what users have, nothing unasked — naming the option passed
+  over), after existing pattern, keeps today, chosen design and convention.
+- **The never-list became the serious list** — money · legal, privacy, safety, minors · what is kept and for
+  how long · who can see what · scope added or dropped · taking away what users have · the owner's words
+  disagreeing or a fact only they have · *Always ask*. Only these become questions. Dates, notifications,
+  ordering, timing, a `CH` the request necessarily implies, and collisions with existing features are now
+  the run's calls (a change that takes something away from users stays serious).
+- Routing: a QUESTION verdict that names no serious item that applies is decided as a default; the cold reader
+  gained a `decide` verdict. Expected questions at init: about 0–6.
+- **Completeness is the job**: lens 5 walks every actor end to end (discover, first use, everyday use, change
+  their mind, the thing going away, coming back); the red team checks that the feature adds up.
+- `ready` re-grills what it decided while closing dry-run and red-team findings, up to two more rounds.
+- The reply leads with *Decided for you* (vetoable with "drop D3" or "D3: <your call>").
+- Deliberately unchanged from blueprint: the sourced / default / gap model, labels and ledger, blind routing,
+  cold reads, delegated answers with their review window, the independent checks.

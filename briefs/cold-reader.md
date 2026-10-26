@@ -22,6 +22,7 @@ material {{SOURCES_DIR}} · the repos, read-only: {{REPOS}}
 | `answered` | The spec, an earlier answer, an adopted default or your own material already settles it — or, **for a question about how the app behaves today only**, the code does | The settling text verbatim with where it is, or `path:line «snippet»` |
 | `irrelevant` | No answer would change any line of the spec (name the 2–3 nearest requirements and quote them); or it is not reachable in the app (cite the code); or it is the engineers' call; or a project rule excludes it (quote it) | That evidence |
 | `simplify` | Real, but carries two decisions, or the drafter's reasoning, or asks about a mechanism where you only care about the outcome | The rewording: one sentence, one decision, no longer than the draft (or the split) |
+| `decide` | Not serious — none of: money, legal/privacy/safety posture, what is kept and how long, who can see what, scope added or dropped, taking away what users have, your own words disagreeing, a fact only you have, an *Always ask* topic. You would rather it were just decided | The line to write and its ground (your product's pattern, keeping today, a convention, or simplest fit) |
 | `extend` | One slice of a wider decision that shows up in other drafted questions or elsewhere in the spec | The wider wording (still one decision) and the ids it absorbs |
 
 **Also, per question:** check its **directions** — is an obvious option missing, or a counter-case wrong?
@@ -33,9 +34,9 @@ in one line (`would_pick`).
 ```json
 {
   "reads": [
-    {"id": "C3", "verdict": "stands|answered|irrelevant|simplify|extend",
+    {"id": "C3", "verdict": "stands|answered|irrelevant|simplify|decide|extend",
      "evidence": "<quote with where, or path:line «snippet»>",
-     "filter": "<for irrelevant: the filter name>", "rewording": null, "absorbs": [],
+     "filter": "<for irrelevant: the filter name>", "decide_text": null, "rewording": null, "absorbs": [],
      "directions": "ok", "would_pick": "<n — why>"}
   ],
   "directives": []

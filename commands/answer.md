@@ -83,9 +83,10 @@ own words ask for the change (ground 1). A delegated answer never widens scope. 
 `soft` refuses them.** A source asking for the larger option settles the row the other way (ground 1); if
 that grows the build past what the feature already is, the row is the owner's.
 
-**The owner's list — answered where a ground holds, but named first in the reply:** money · scope (in or
-out) · a change to existing behaviour · final wording · what is shown to other people · what is kept and
-for how long.
+**The owner's list — answered where a ground holds, but named first in the reply:** the serious list
+([../reference/rules.md](../reference/rules.md) §4) — questions only reach this command when they are serious,
+so most rows are on it; `answer` takes those a ground still settles (the owner's own words, the product's
+pattern, the safer and smaller option) and leaves the rest.
 
 **Tests every answer passes** (one line each in the drafter's return; the challenger re-checks them):
 - **one decision** — a single, failable choice;

@@ -43,11 +43,15 @@ In Codex: `$blueprint-feature init …`, or ask in plain words.
 
 - **Several agents attack the draft in parallel**, each with one lens: the builder who must not guess,
   the hostile tester, collisions with the existing app, lifecycle and compatibility, who it's for.
-- **Most findings never reach you**: anything the code answers becomes a cited product fact; anything the
-  app's own patterns or a safe convention settles becomes a labelled default you can veto (*"drop D3"*);
-  wrong text is fixed. A **second agent re-decides every finding blind**, and **every question is read
+- **It takes ownership.** Most findings never reach you: anything the code answers becomes a cited product
+  fact; every ordinary product call is decided by the run — on the app's own patterns, keeping today's
+  behaviour, or the simplest fit — and listed as a labelled default you can veto (*"drop D3"*, *"D3: …"*);
+  wrong text is fixed. **Questions are only for what is serious**: money, legal or privacy posture, what is
+  kept and for how long, who can see what, scope added or dropped, taking away what users have, or your own
+  words disagreeing. A **second agent re-decides every finding blind**, and **every question is read
   cold** by a fresh agent before you see it.
-- **Changes to what users have today are always yours to decide** — never defaulted.
+- **Its real job is that the feature adds up**: every actor walked end to end — discovering it, first use,
+  everyday use, changing their mind, the thing going away, coming back — with no step left uncovered.
 - **`ready` has a fresh engineer agent try to plan the feature from `FEATURE.md` alone** and list every
   guess it had to make, while a red team on a different model hunts contradictions, silent changes and
   untouched neighbours.

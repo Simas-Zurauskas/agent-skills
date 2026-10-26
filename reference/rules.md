@@ -60,7 +60,8 @@ edits an existing line is flagged for the owner.
 
 ## 4. Never invent — but adopting a labelled convention is not inventing
 
-- An unknown is a marker plus a question, never prose.
+- An unknown is never prose: it is a labelled default (the run's call), or — when serious — a marker plus a
+  question.
 - **A contradiction between two sources — or inside one — is surfaced with both quotes**, never averaged
   and never settled in favour of the newer one. An explicit change (*"instead"*, *"we've dropped"*) is not
   a contradiction: the later words win and the earlier are quoted.
@@ -70,23 +71,34 @@ edits an existing line is flagged for the owner.
   two answers differ in what the product does after the feature is never settled by the code** — not as a
   product fact, not as an *already answered* discard, not as a delegated answer's ground 1. Code that
   differs from the owner's request is not a contradiction: it is the change asked for, written as `CH-n`.
-- **A default** may settle a gap only where **all four** hold, each attested on its ledger line:
-  (a) one dominant way — the product's own pattern for the same kind of thing (cited), a design the
-  owner named as the chosen one (cited), or a convention any competent team follows the same way;
-  (b) nothing owner-owned turns on it; (c) reversible without breaking a promise already made to users;
+- **The run takes ownership of the feature's ordinary calls.** This is not a whole-product PRD: what
+  matters is that the feature adds up and nothing is missing, not that the owner signs every detail. So a
+  gap the owner did not settle is **decided by the run** — written as a labelled default, listed for veto —
+  unless it is **serious** (below). A default needs, each attested on its ledger line: (a) a ground — the
+  product's own pattern for the same kind of thing (cited), keeping today's behaviour (cited), a design the
+  owner named as chosen (cited), a convention any competent team follows, or **simplest fit**: of the
+  plausible options, the one that delivers what the owner asked with the least to build, the fewest new
+  promises and the least change to what users have today, adding nothing they did not ask for; (b) it is not
+  serious; (c) it is reversible — a later veto costs a change, not lost user data or a broken promise;
   (d) no fact only the owner has is needed.
-- **Never a default — always the owner's (the never-list):** money · legal or compliance applicability ·
-  final user-visible wording (a default may fix that a message exists, when it shows and what it must
-  say, with wording labelled *illustrative*) · scope (whether something is in or out) · dates, deadlines,
-  windows and durations not already in the product · retention or deletion of what users created ·
-  minors' data · **a change to behaviour users already have** (every `CH-n` comes from the owner's words
-  or an answer) · **a new capability, channel or state the feature would add** (an offline queue, a new
-  notification, a new permission) · who can see something new · anything on the project's *Always ask*
-  list.
-- **Keeping existing behaviour is the conservative default — within limits.** A `KEEP` may be adopted as a
-  default only where no requirement changes that behaviour's inputs or what it shows. Where this feature
-  and an existing one act on the same record or screen and the outcome is not obvious from the owner's
-  words, that collision is a question, not a `KEEP` default.
+- **Serious — always the owner's, never a default (the serious list):**
+  - **money** — prices, fees, refunds, anything charged or paid;
+  - **legal, privacy and safety posture** — which rules apply, what users consent to, minors' data;
+  - **what is kept and for how long** — retention or deletion of what users created;
+  - **who can see what** — making something visible to people who could not see it before;
+  - **scope** — adding a capability the owner did not ask for, or dropping one they did;
+  - **taking away what users have** — removing or breaking existing behaviour people rely on (reordering,
+    extending or adding to a surface the owner's request touches is not this);
+  - **the owner's own words disagree**, or a fact only the owner has is needed (store settings, plans, intent);
+  - **anything on the project's *Always ask* list.**
+  Final user-visible wording is neither a question nor a default: it is a slot, with illustrative text.
+- **Changes to existing behaviour.** A `CH-n` comes from the owner's words, an answer, or — where the
+  owner's request necessarily changes that surface — a default that makes the smallest change delivering
+  what they asked. A change that takes away what users have is serious.
+- **Keeping existing behaviour is the conservative default**: where the feature is silent on an existing
+  behaviour it touches, a `KEEP` default keeps it. Where this feature and an existing one act on the same
+  record or screen, the run decides which wins by the same grounds (most often simplest fit) and writes it —
+  it is a question only if the outcome is serious.
 
 ## 5. Every independent check is a separate dispatch
 

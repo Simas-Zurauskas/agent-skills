@@ -28,7 +28,8 @@ Break each sentence into atomic claims — every actor, action, condition, numbe
 - A `Today:` or `KEEP` statement must match the baseline **and** the code; check the code when in doubt.
 - A provenance line must match the row or source it names; a line from a delegated answer must say so.
 - A `Default` states one decision and names nothing (figure, vendor, channel) that no source or product fact
-  gives; its ground must fit (an `existing pattern` default cites a real pattern).
+  gives; its ground must fit (an `existing pattern` default cites a real pattern; a `simplest fit` default
+  names the option it passed over and does not add anything the owner did not ask for).
 - `Tentative` lines: the quoted owner words appear in the sources verbatim.
 
 ## Return — one fenced JSON block (non-clean claims only, plus the clean count)

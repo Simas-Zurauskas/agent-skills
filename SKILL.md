@@ -1,6 +1,6 @@
 ---
 name: blueprint-feature
-description: 'Specs one new feature or change for an app that already exists, after its PRD is frozen. Use for "spec this feature", "define this change properly", "grill this feature idea", "what are we missing in this feature", "answer what you safely can", "apply the answers", "is this feature ready to plan". Learns today''s product from the wiki and the code (never a frozen PRD or Notion), writes FEATURE.md with numbered failable requirements, changes to existing behaviour, what must stay the same, edge cases, compatibility and exclusions, then grills it with independent agents, cold-reads every question, writes answers back with a blind checker, and gates on a dry-run builder and a red team. Kept in the task folder under blueprint-feature. Commands: init, add, questions, answer, resolve, status, ready, auto. Not for a whole new product (use blueprint) or for implementation planning.'
+description: 'Specs one new feature or change for an app that already exists, after its PRD is frozen. Use for "spec this feature", "define this change properly", "grill this feature idea", "what are we missing in this feature", "answer what you safely can", "apply the answers", "is this feature ready to plan". Learns today''s product from the wiki and the code (never a frozen PRD or Notion), writes FEATURE.md with numbered failable requirements, changes to existing behaviour, what must stay the same, edge cases, compatibility and exclusions, then grills it with independent agents, decides ordinary calls itself and asks only serious questions, writes answers back with a blind checker, and gates on a dry-run builder and a red team. Kept in the task folder under blueprint-feature. Commands: init, add, questions, answer, resolve, status, ready, auto. Not for a whole new product (use blueprint) or for implementation planning.'
 ---
 
 # blueprint-feature
@@ -21,7 +21,14 @@ on to implementation planning, which is **beyond this skill**.
    evidence of today, never of what the feature should do;
 3. **a labelled default** — `Default D3 (existing pattern — … — adopted <date>): …`, vetoable with
    *"drop D3"*;
-4. **an admitted gap** — `[NEEDS CLARIFICATION: … → q-04]` with a written question.
+4. **an admitted gap** — `[NEEDS CLARIFICATION: … → q-04]` with a written question — only for what is serious.
+
+**It takes ownership.** This is one feature, not a product's PRD: the run decides the feature's ordinary calls
+itself — on the product's own patterns, keeping today's behaviour, or the simplest fit — labelled and listed
+so the owner can veto any with a word. Its real job is that **the feature adds up and nothing is missing**.
+Only serious matters become questions: money, legal or privacy posture, what is kept and for how long, who can
+see what, scope added or dropped, taking away what users have, the owner's own words disagreeing
+([reference/rules.md](reference/rules.md) §4).
 
 ## Commands
 
