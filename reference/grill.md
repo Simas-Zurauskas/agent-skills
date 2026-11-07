@@ -32,7 +32,34 @@ needed to judge them. Sources remain accessible; do not hide contrary evidence o
 
 ## 2. Coverage lenses
 
-Each role works the relevant lenses without needing one agent per lens:
+Each role works the relevant lenses without needing one agent per lens.
+
+**Start from evidence, then compare the draft.** In a fresh review, first read the raw owner material,
+applicable project constraints and relevant current-product evidence for the assigned scope. Before
+opening the candidate FEATURE, question/default text or author explanations, state a compact set of
+source-supported actors, actions, affected records, authority and observable outcomes in the review
+messages. Include consequential behavior that must be preserved. These expectations can reveal a
+requested operation missing from the draft entirely; do not derive them only from its FR list.
+Then open the candidate and compare it with those expectations and the evidence. Keep the expectations
+in the existing return's coverage; no new project document or reviewer is required. Delta reviews and
+rechecks use their affected scope, not a new whole-product inventory. Unchanged adequate coverage still
+uses §4's reuse rules. Missing raw evidence is uncovered scope, never invented intent.
+
+**Try a harmful implementation that still satisfies the words.** For consequential outcomes, describe
+a reachable sequence and its observable result, then identify the exact requirement or global rule
+that forbids the harm. If none does, handle the concrete gap through the existing dispositions. Check
+both reads and actions on the affected records and distinguish confirmed, failed and unconfirmed
+outcomes of operations already in scope. A global rule can settle several features without copies.
+This is reasoning about behavior, not code generation, implementation planning or an exhaustive fault
+matrix; no new operation or compulsory owner question follows from the exercise.
+
+For example, an existing save operation reporting success after failure needs truthful outcome feedback;
+it does not automatically need offline autosave or cross-session unsaved drafts. A shared rule already
+covering all views defeats duplicate visibility findings, while a read restriction alone does not settle
+mutation authority. An unresolved access expansion follows the serious-decision rules; ordinary
+feedback uses an eligible default when justified, without treating either as an owner fact.
+
+Apply the existing lenses:
 
 1. **Builder:** can each FR/CH/KEEP be placed in this product and checked? List missing observable product
    decisions. Ordinary file layout, libraries, mechanisms and test tooling are engineering choices.

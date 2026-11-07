@@ -5,8 +5,18 @@
 Fill the applicable [brief template](../briefs/review.md) or [mapping template](../briefs/cartographer.md)
 and save it under `<home>/work/<run-id>/brief-<role>-<n>.md`. Point to absolute source/artifact paths;
 freeze copies if they could change while readers work. Save each actual return beside its brief before
-acting. Reviewers get the final candidate and raw evidence, not author reasoning, previous verdicts,
-recommendation preferences or conversation history. Do not show another review's result in a recheck.
+acting. For substantive reviews, name source/current-product inputs separately from candidate inputs.
+Retain exact settled owner decisions, vetoes and project authority in the source set even when their
+original home is a question/default row; preserve origin and status, and do not promote delegated
+proposals to owner facts. The initial task contains the assignment and frozen paths, not the candidate body, author findings,
+reasoning, prior verdicts or recommendation preferences. State the read order explicitly in the initial dispatch before any packet access: open ONLY source/current-product
+evidence, emit expectations, THEN open the frozen candidate; do not batch both reads or rely on discovering
+the order inside a packet. The reviewer reads the raw material and
+relevant current-product evidence first, states its expectations, then opens the frozen final candidate
+under [grill §2](grill.md). Keep these expectations in the existing return's coverage; retain an initial
+review message when the harness exposes it, without a new project artifact or handoff. Never present a
+review that received the draft body first as source-first. Mapping keeps its existing inputs. Do not
+show another review's result in a recheck.
 
 ## 2. Scope and data
 

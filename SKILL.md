@@ -58,6 +58,7 @@ answer-application checker. Their useful questions belong in substantive review.
 
 Choose by consequence, blast radius and reversibility, never requirement count. The exact timing,
 coverage, scope filter, correction bound and reuse rules live in [grill](reference/grill.md).
+An existing reviewer derives expectations from raw evidence before opening the candidate definition.
 Before multiple dispatches, say how many and what distinct work they cover. Use real separate contexts
 on [Claude Code or Codex](reference/dispatch.md). Missing review stays explicit and blocks ready.
 

@@ -219,3 +219,28 @@ unsettled draft. Dirty-source maintenance with unchanged HEAD invalidated readin
 review was unavailable. Existing v7 homes retained identical output in 16 read-only helper comparisons.
 These bounded checks do not establish a general speedup or runtime correctness. The actual restricted
 Claude subagent check establishes routing only, not an equivalent substantive reviewer benchmark.
+
+## v9 — 2026-11-07 — source-derived review and counterexamples
+
+The prior v8 tree and working-tree state are preserved in the maintainer's isolated v64/v9 lab. A review now
+reads raw intent and relevant current-product evidence before candidate prose, records compact
+expectations in its existing return, and compares for omitted operations as well as flawed clauses.
+Consequential promises receive concrete harmful-but-still-compliant counterexamples, checked against
+global protections before a gap is emitted. This stays inside the current combined/complementary roles;
+there is no new command, reviewer, project document, approval or implementation stage. Brief and dispatch
+input ordering changed together so source-first is an actual read sequence, not a retrospective label.
+
+Authority, risk tiers, correction/reuse limits, public schemas and helper behavior remain unchanged.
+Examples distinguish truthful feedback from new persistence, existing global rules from duplication,
+and serious access choices from ordinary defaults. Independent comparison supports bounded adoption. Archive init/ready and a later owner edit-policy
+change preserved the same source-supported behavior as v8, with app/source bytes unchanged and fresh
+review of the final inputs. Native child traces confirm source reads and expectation messages before
+candidate reads in both complementary roles. No semantic advantage over v8 is established by this
+small feature case; this is a procedural transfer with observed preservation, not a quality guarantee.
+Structural success alone is not evidence of completeness.
+
+The shared Blueprint repeated-review comparison improved draft-edit coverage while retaining a clean
+protected control; unresolved creation/retry coverage and other missed cases remain documented.
+Initial-dispatch instructions state the order before file access, avoiding the bootstrap failure
+seen in the first two Blueprint lab attempts. No new helper, review role, project document or gate
+was installed; existing risk tiers, authority and final-input reuse remain authoritative.
