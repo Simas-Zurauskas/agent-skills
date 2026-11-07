@@ -13,7 +13,7 @@ Row shape (fields above **Answer & why**; a run adds `Applied`, `Why flagged` or
     - **Touches:** FR-3, KEEP-1
     - **Why asked:** …
     - **Directions:** 1. … — but … · 2. … — but …
-    - **Recommended:** 1 — … (only when two reviewers agreed)
+    - **Recommended:** 1 — … (optional evidence-backed proposal, not an owner decision)
     - **Created:** <date>
 
     **Answer & why:** _(unanswered)_

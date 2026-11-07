@@ -159,3 +159,63 @@ default that could not be built (corrected), a default that quietly contradicted
 (became the one question), and a wrong menu placement (corrected) — the gate doing what it is for. The run
 skipped further re-grill rounds once a question had been written; that is now the rule. Costs measured:
 `init` ≈ $28 / 37 min, `resolve` + `ready` ≈ $27 / 37 min on a one-surface feature (Opus).
+
+
+## v7 — 2026-11-05
+
+The owner authorized a practical revision after six isolated OSS spec/build attempts and independent
+behavior/browser evaluations. Under a 20-minute spec cap, v6 stayed Draft in all three cases; the trial
+reached ready for search (12.3 min) and private drafts (17.8 min), with pins still Draft. Trial search
+used 155k uncached input tokens versus at least 314k in v6 before the censored follow-up. These are one
+trial per condition, some incomplete turns and runner repairs, not dollar billing or eventual-quality
+proof. The frozen trial also added an unrequested concurrency contract; it was not installed wholesale.
+
+- Risk/blast-radius/reversibility determine coverage: one combined review for small local work, builder
+  plus adversary for interacting/consequential work, focused extra help only for distinct breadth/risk.
+- Author maps/drafts ordinary behavior directly. Substantive reviews absorb baseline verification,
+  fidelity, routing, question clarity, answer challenge/application; retired duplicate role briefs.
+- Apply known owner decisions first; surface serious gaps early. Chained commands share one useful final
+  review boundary. Ready reuses input-current coverage; real corrections receive targeted rechecks.
+- One correction/recheck batch by default; explicit rounds is a ceiling. Incomplete work stays Draft.
+- Every new promise must protect a requested outcome from a concrete reachable failure, using the
+  simplest adequate behavior. Optional hardening/mechanisms do not silently expand the product spec.
+- Keep implementation validation separate: independent pin runtime checks still found boundary/data
+  defects even when feature tests passed. Planning readiness is not runtime/release certification.
+- Compact existing reports/logs; no new receipt engine or schema migration. Keep FR/CH/KEEP/B/q IDs,
+  source capture, provenance, defaults/vetoes, snapshots, counts/anchor/lint/lock mechanics compatible.
+- Honor genuine project intent authority; distinguish inspected checkout from evidenced deployment.
+  Unknown release state is explicit. Model routes use supported identifiers/configured defaults with
+  actual reporting; fresh context is mandatory, a different model no longer multiplies every check.
+
+Mechanical validation and focused independent forward-testing are recorded in the maintainer's update
+workspace. Claude/Codex instruction paths and symlinks are preserved; no claim of a live Claude replay.
+
+## v8 — 2026-11-07
+
+Conservative maintenance of v7's review policy. The lock CLI previously called a run abandoned solely
+from log age and told the caller to close it, contradicting the governing ownership rule. It now reports
+unconfirmed ownership and requires evidence that the writer stopped. Exit codes, schemas and log
+formats are unchanged; log inspection is explicitly not an atomic lock. The self-test exercises recent,
+old and older hidden open runs through the CLI and verifies read-only behavior.
+
+Claude routing explicitly requires a non-fork fresh context; background execution does not itself
+compromise isolation, and a conversation fork is not an independent reviewer. Native collection and
+existing bounded fallback remain; no global configuration changes. Handoff links existing definition
+and evidence without adding planning artifacts. Small/elevated/broad coverage, serious-decision
+authority, correction bounds and freshness/reuse rules remain unchanged. Validation evidence and
+limits are recorded in the companion v63/v8 lab assessment; no runtime or release certification.
+
+Independent comparison also reproduced three inherited helper defects, repaired locally in this release:
+the earlier documented bullet-form answer was parsed as empty; rowhash omitted middle members of valid
+Touches ranges (and wrapped continuations); changed ignored additions/deletions against a snapshot.
+Both answer spellings remain readable, the canonical example matches the existing template, range
+expansion is shared with lint, and file existence differences are reported as changes. Regression
+controls cover unchanged/unrelated text and restored files. No stored schema, IDs or flags change.
+The question template no longer implies that an optional recommendation always requires two reviewers.
+
+Fresh paired feature trials retained one combined review for the narrow sort change and reuse at ready.
+Both versions surfaced the serious sharing/access/data decisions early without exhaustive review of an
+unsettled draft. Dirty-source maintenance with unchanged HEAD invalidated readiness when new independent
+review was unavailable. Existing v7 homes retained identical output in 16 read-only helper comparisons.
+These bounded checks do not establish a general speedup or runtime correctness. The actual restricted
+Claude subagent check establishes routing only, not an equivalent substantive reviewer benchmark.

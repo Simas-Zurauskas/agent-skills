@@ -1,41 +1,23 @@
-# auto — the owner delegates the loop
+# auto — one authorized definition sequence
 
-`auto [rounds]` runs `answer` → `resolve` (with its delta grill) round after round, then `ready`. It is for an
-owner who would rather veto than answer. Only a live invocation by the owner starts it, and every answer it
-gives is labelled as delegated ([../reference/rules.md](../reference/rules.md) §1).
+Read [rules](../reference/rules.md) and [record](../reference/record.md). A live invocation delegates
+ordinary defensible question answers; serious unresolved decisions remain the owner's.
 
-**What keeps it safe:** a delegated answer never grounds another delegated judgement — questions that arise from
-text a delegated answer wrote are answered for the owner only on evidence (grounds 1–3) and never when they are on
-the owner's list ([answer.md](answer.md) W2); a delegated answer never
-changes or removes an existing line ([resolve.md](resolve.md) R2); and `ready`'s stamp says *pending your
-review* until the owner accepts what was decided for them.
+1. Take one lock/entry. Record all supplied owner material, answers, overrules and vetoes first.
+   Draft or update the feature as needed; apply existing Answered rows before substantive review.
+2. Close ordinary gaps under scope/default rules and leave serious unknowns explicit. If a material
+   owner decision blocks a settled definition, list it and stop; do not spend exhaustive reviews on
+   behavior certain to change. Do not invent further policy from earlier delegated choices.
+3. Proceed to [ready](ready.md), consolidating review at that final useful boundary. There is no answer
+   challenger, per-answer application checker, post-resolve grill and then another full ready grill.
+   Required risk coverage and targeted correction checks remain real independent dispatches.
+4. Default one correction/recheck batch. An explicit rounds number is a ceiling on additional material
+   correction cycles, not a demand to run them or permission to manufacture decisions. Stop when no
+   material change remains, owner evidence is needed, review is unavailable, or the ceiling is reached.
+   A budget limit with required work left means Draft. Never run an extra hidden loop after the ceiling.
+5. Snapshot own writes between cycles if needed to distinguish owner edits; finish one report, snapshot
+   and closed/paused line. Honor stop instructions immediately without starting another edit.
 
-## The loop
-
-`auto` takes the lock and opens one log entry; the commands it runs work inside that entry — they take no
-lock and open or close nothing ([../reference/record.md](../reference/record.md) §4) — and share one report. It
-records chat answers in the invocation first.
-
-1. **Round** (at most `rounds`, default 3):
-   1. [answer.md](answer.md) over the `Open` rows (rows left before and unchanged are skipped).
-   2. [resolve.md](resolve.md) — applies the owner's and the delegated answers, then grills what changed.
-   3. **Stop the loop** when this round answered nothing new — every `Open` row left is one only the owner
-     can take — or wrote no new question.
-2. **`Flagged` rows stop the loop before `ready`**: they are the owner's, listed first in the reply.
-3. If no `Open`, `Answered` or `Flagged` row remains, run [ready.md](ready.md). If `ready` writes new
-   questions, one more `answer` → `resolve` pass, then `ready` once more — never more than one such pass.
-4. After each round, `bf.py snapshot <home> --run <id>-r<n>` — so the next round's `bf.py changed` shows only
-   edits the owner made, never this loop's own writes. Heartbeat `note round n` lines; one report, one final
-   snapshot and one `closed` line at the end.
-
-## The reply — one report for the whole loop
-
-1. **Verdict** — *Ready for planning (pending your review)* or *Not ready — n questions need you*.
-2. **Questions only you can take** — each with why it was left and its recommended direction, if any.
-3. **What I decided for you** — every delegated answer (owner's-list ones first) and every default, one line
-   each, numbered for veto: *"say "accept", or "q-4: …" / "drop D3" to change any."*
-4. **What changed in the feature** — counts, and the parts most affected.
-5. Agents dispatched, anything unverified, anything flagged.
-
-If the owner interrupts, the command in progress finishes its current write, logs `paused`, and the next
-invocation continues from the files.
+Reply with actual verdict, owner decisions left, labelled calls for veto, real review usage/reuse and
+residuals. Ordinary defaults need no additional approval. Preserve any genuine serious delegated review
+window; general auto did not authorize inventing that policy.

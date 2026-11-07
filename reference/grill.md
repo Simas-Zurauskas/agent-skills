@@ -1,118 +1,103 @@
-# The grill — lenses, sweeps and sizing
+# Substantive review — coverage, timing and bounds
 
-The grill attacks `FEATURE.md` to find what it cannot answer yet. This is the single home of the lenses;
-commands point here. Each lens is a separate frame — a reader looking for everything finds the average of
-it, a reader trying to break one thing finds it — and each candidate says which lens found it.
+## 1. Size and time the review
 
-## 1. Scales
+Inspect blast radius before choosing a tier; requirement count is not a risk measure.
 
-| Scale | When | Passes (agents, concurrent) |
-|---|---|---|
-| **Delta** | `add`, `resolve`, bare `questions` | **2** — A: lenses 1 + 2 over the changed text · B: lenses 3 + 4 over the changed text against the baseline. Sweeps only as far as the changed text touches them. Nothing changed → no passes |
-| **Full** | `init`, `questions full`, `ready` | **4** — 1: lenses 1 + 2 over every line · 2: lens 3 · 3: lens 4 · 4: lens 5 + the sweeps (§3) |
-| **Full, small change** | as Full, for a **small change** — the one definition: the request names one surface, and the draft has one `Behaviour` part and at most ~5 requirements | **2** — A: lenses 1 + 2 · B: lenses 3, 4, 5 + sweeps — each lens still worked separately inside its pass |
+| Tier | Required independent coverage |
+|---|---|
+| Small | One combined reviewer covers intent, scope, baseline facts, buildability and preservation. Local reversible behavior, known narrow effects, no material access/data/financial/compatibility hazard. |
+| Ordinary / elevated | Two fresh reviewers: builder/current-product plus adversary/intent/risk. Use for interacting surfaces, lifecycle, permissions, durable data, money or release-contract hazards. A supplied owner decision does not eliminate its implementation risk. |
+| Broad | Retain those complementary checks. Split read-only mapping where discovery genuinely benefits, and add a focused specialist only for an identified hazard not adequately covered. No fixed maximum based on FR count. |
 
-**Changed text** = the lines the `item` log lines since the last `grill` line name, **plus the owner's
-edits since the last run** (`bf.py changed`), plus every line naming a record, surface or actor those lines
-name.
+Choose the tier once and revisit if scope/risk changes. Before multiple dispatches, state count and
+distinct purpose. Use [review brief](../briefs/review.md) for substantive checks, optionally
+[cartographer](../briefs/cartographer.md) for non-overlapping mapping. Roles are coverage, not extra
+command stages. All roles check scope/default eligibility and factual evidence in their assigned area.
 
-Brief: [../briefs/grill-pass.md](../briefs/grill-pass.md). **Paste the full text of the pass's lenses from
-§2 (and §3 for the pass with the sweeps) into `{{LENSES}}`** — an agent cannot follow links back into this
-skill. Every pass reads all of `FEATURE.md`, `baseline.md` (with its project rules and blast radius),
-`questions.md`, `record/defaults.md` and `sources/`, and the repos read-only — **a pass that cannot see the
-rest of the document asks what the document already answers.** Only the attack surface narrows.
+Apply all supplied owner material first. If serious unresolved decisions prevent a settled definition,
+write their rows/markers and defer exhaustive review until answered. Still inspect enough product to
+ask sound questions. On an explicit `questions` request, review useful remaining gaps now; do not spend
+agents re-proving an already known blocker. `init soft` stops before independent review.
 
-**Every pass disposes before it emits**: it tries to settle each candidate from the document, the code
-(current behaviour only), the product's patterns or one convention, and emits it tagged with what settled
-it. **An empty pass is a success.**
+For a chained invocation, consolidate material/answers and review once at the final useful boundary.
+Do not review once for add, again for resolve and again for ready against unchanged behavior. A settled
+standalone init gets the appropriate substantive coverage; a later unchanged ready can reuse it.
 
-## 2. The lenses
+Full = the entire feature and relevant neighbours. Delta = changed outcomes plus dependent requirements,
+shared records/actors/contracts and relevant neighbouring consumers, not merely edited sentences.
+`questions full` explicitly requests fresh full scrutiny. For narrow deltas give the complete current
+FEATURE/baseline and exact relevant source spans; include definitions, exclusions and unsettled decisions
+needed to judge them. Sources remain accessible; do not hide contrary evidence or load every old report.
 
-**Lens 1 — the builder who must not guess.** Walk each line as if implementing it tomorrow with the
-codebase open. Every place you would have to guess is a candidate. Most are closed by the run itself —
-where the code shows how the product behaves **today**, a `product` fact; otherwise a `default` on the
-strongest ground (the product's pattern, keeping today, the chosen design, a convention, or simplest fit),
-**with the text to write**. Only a gap on the serious list ([rules.md](rules.md) §4) is the owner's.
+## 2. Coverage lenses
 
-**Lens 2 — the hostile tester.** Attack each `FR`, `CH`, `KEEP`:
-- **two drafts** — write both behaviours the sentence could mean; where they diverge observably, that is
-  the candidate;
-- **reachability** — a constructed case counts only if the state is reachable in the product as built
-  (check the code) and a requirement hangs on which reading wins;
-- **dependency** — every term, event or value a line consumes is produced by another line, a baseline
-  fact, or a source; otherwise a candidate;
-- **boundary** — limits, counts and thresholds at the exact edge and just past it.
+Each role works the relevant lenses without needing one agent per lens:
 
-**Lens 3 — collision with the existing product.** For every surface, record and flow in the baseline and
-every item in its blast radius:
-- does `FEATURE.md` say what happens to it — a `CH` or a `KEEP`? A touched thing with neither is a
-  candidate — usually closed by the run as a `KEEP` default, or a `CH` default where the request necessarily
-  changes it;
-- where this feature and an existing one act on the same record or screen, which wins and what does each
-  actor see? The run decides it (pattern, keeping today, simplest fit) — a question only if it is serious
-  (it takes away what users have, widens who sees what, …);
-- does any line break a project rule, an invariant or a contract?
-- **search past the baseline**: grep the code for consumers of what the feature touches (share images,
-  notifications, home summaries, marketing pages, background jobs). A missed consumer is a candidate and a
-  `baseline_gaps` entry;
-- another feature home citing the same surfaces (blast radius) — do the two specs disagree?
+1. **Builder:** can each FR/CH/KEEP be placed in this product and checked? List missing observable product
+   decisions. Ordinary file layout, libraries, mechanisms and test tooling are engineering choices.
+2. **Intent and scope:** every promise is sourced or an eligible labelled default; no limits dropped,
+   serious policy invented or optional improvement promoted to a requirement. Apply rules §4's scope test.
+3. **Existing-product collisions:** trace other readers AND writers of touched records/surfaces beyond
+   the initial baseline. Shared queries/serializers, combined writes, automation and import paths can
+   change unrelated data or expose private state. Every affected surface gets a CH/KEEP. Check actual
+   configured patterns, not only a happy-path fixture or a function's name.
+4. **Lifecycle and compatibility:** existing data, roles, supported client/server combinations, deletion,
+   reversal and release constraints where reachable. Preserve explicit omission/default promises across
+   the product's actual entry points and clients; no invented universal support matrix.
+5. **Coherence:** walk each actor's requested task end to end, including discovery, empty/error states,
+   change of mind and removal where relevant. Every consumed value/state has a source and a reachable
+   path. Two plausible observable readings reveal a decision; do not manufacture a larger feature to
+   close an engineering choice.
 
-**Lens 4 — lifecycle and compatibility.** Data that exists on launch day · people on older app versions
-beside new ones, and what each sees of the other's actions · the new app against a backend not yet
-updated, and release order · an action taken offline and replayed later · sync to other members and to
-the same person's other device · leave, removal, rejoin, closing, deletion, account deletion, export ·
-switching the feature off or pulling it, and what happens to what users made with it. Every row of the
-compatibility table ([feature-shape.md](feature-shape.md) §9) is filled. A state is a candidate only where
-the product makes it reachable and two behaviours differ in what someone sees or is promised.
+## 3. Relevant sweeps and findings
 
-**Lens 5 — does the feature add up?** Walk **each actor end to end**: discovering the feature, first use,
-everyday use, changing their mind, the thing going away (closed, deleted, left), and coming back — on each
-surface the feature touches. Every step must be carried by a line; a step with none is a gap to close.
-Reconcile `Who` against the requirements both ways (an actor no requirement serves; an actor named but not in
-`Who`; a job no requirement delivers). Empty and first-run states; scale — one item, many, the most a real
-user has (read limits from the code). Every value a requirement uses is produced somewhere; every state the
-feature creates has a way in and a way out.
+Check permissions/visibility, actual notifications, data lifecycle, platforms, supplied content,
+abuse, mistakes/undo, time boundaries, release reversal and multiplied costs only where the feature has
+the thing concerned. Honor Never raise. Real retention/deletion or shared-record permissions are not
+generic checklist noise. Evidence of a missing requested guarantee cannot be discarded for cost.
 
-## 3. Sweeps — *which of these does no line cover?*
+A useful finding names an observable defect/decision, evidence, reachable consequence and requested
+promise affected. The author verifies evidence and handles it through [dispositions](dispositions.md).
+A missing engineering parser/test is not a reason to turn this skill into implementation certification.
+Record a relevant implementation caution without prescribing every invalid payload in FEATURE.md.
 
-Worked only where the feature has the thing the item is about, and skipped for anything on the
-**Never raise** list:
+## 4. Corrections, reuse and readiness
 
-- **Permissions** — per actor, per new action: who may, who may not, what the others see.
-- **Visibility and privacy** — personal or shared? Who sees it, where — notifications, share images,
-  previews, other people's screens.
-- **Notifications** — does anything new notify, or change what an existing notification says or when?
-- **Data lifecycle** — created, shown, changed, exported, deleted, and what deletion takes with it.
-- **Platforms and form factors** — the product's actual matrix from the baseline (phone and tablet, each
-  OS, light and dark, its themes).
-- **Copy** — every new string accounted for in `Copy and content`.
-- **Trust** — per thing the feature accepts on faith: what someone gains by abusing it.
-- **Undo and mistakes** — the wrong tap, the reversal, the double tap.
-- **Time** — day boundaries, time zones and clock changes, wherever the feature counts days or deadlines.
-- **Store and OS** — a new permission prompt and its purpose text, privacy labels / data-safety answers,
-  rules for content people create.
-- **Release and reversal** — what ships first, whether it can be switched off, what happens if it is
-  pulled.
-- **Cost-bearing volume** — storage, notifications, bandwidth the feature multiplies.
+Default: one consolidated correction batch, then a fresh targeted recheck of changed outcomes and
+dependencies by the appropriate role(s). Give the final artifacts and raw evidence, not earlier verdicts
+or a suggested answer. Recheck the actual outcome and adjacent effects, not just whether text was edited.
+No additional full grill merely because a fix/default was written. If material defects remain after the
+bound, leave Draft with exact residuals. Explicit extra rounds authorize more work, not invented cycles.
+Material scope/baseline changes or a new hazard require adequate broader coverage.
 
-A sweep candidate that nothing in the sources, requirements or product makes bite is discarded (*Generic
-checklist*, with its survey). **Never discarded that way:** retention or deletion of what users create, and
-permissions on records other people share.
+Keep one compact Checks table in the run report: role/scope, actual route/reported model, verdict,
+brief/return paths and input evidence. Reuse only coverage that remains adequate and whose inputs are
+confirmed unchanged. Record content hashes for governing feature/baseline/questions/defaults/source
+artifacts, applicable guides/skill policy and reviewed source; capture each repo's HEAD and the content
+of staged/unstaged diffs and nonignored untracked files (including names). Hash ignored files only if
+used as evidence. Use existing hash/git tools; no receipt database or per-finding certificates.
 
-## 4. Bounds
+Only the FEATURE status line may be ignored when comparing review inputs; readiness stamping must not
+invalidate itself. Log/report/snapshot additions are not product changes. HEAD or status filenames
+alone do not prove freshness: dirty bytes can change in place. New readers/writers matter even when an
+anchor's snippet survives. An unchanged frozen input set within the current invocation can be reused
+directly. Across runs, inspect the compact report and snapshots; absent adequate input evidence, review
+the affected area instead of assuming validity. An unrelated change needs a documented applicability
+check, not automatic full re-review or silently updating the old hash.
 
-- **Depth.** `resolve` grills the lines it just wrote (the derivative round) — that is allowed. What is
-  bounded is the chain: a candidate of **depth 3 or more** (grounded in a line written from an answer to a
-  question that itself came from an answer — [feature-shape.md](feature-shape.md) §8) is not written as a
-  question **unless it is serious or a contradiction** — those stay
-  questions at any depth. Others become a default if eligible, a rabbit hole, or a discard; `ready` lists
-  every depth-capped discard in its reply.
-- **Repeat round** only when the owner asks; two rounds is a budget, never a completeness claim.
-- **An empty grill never proves completeness.** `ready` adds a dry-run builder because a builder actually
-  trying to plan trips over what readers miss.
+Clearing an unverified tag after actual matching clean coverage or updating a legacy review-status
+annotation is metadata-only: record the exact applicability/diff and new input evidence, not another
+substantive review. This never clears an owner decision or changes a promise under a metadata label.
 
-## 5. What each pass returns
+A clean result must cover the FINAL governing inputs. If a recheck causes another material correction,
+that correction still needs coverage; a budget never makes it clean. No missing reviews, open serious
+decisions, unsupported claims or relevant stale facts at ready. A missing/unknown release ref alone does
+not establish a defect. Mechanical lint success is necessary, not sufficient.
 
-The fenced JSON in the brief: per candidate `id`, `lens`, `about`, `gap`, `grounding` (verbatim quotes with
-where), `settled_by` (or null), `two_answers`, `why_it_matters`, `rabbit_hole`; plus `baseline_gaps` and
-`directives`. The orchestrator merges passes and disposes ([dispositions.md](dispositions.md)).
+## 5. Returns
+
+The [brief](../briefs/review.md) returns coverage and evidence-backed findings. Empty findings can be a
+valid success, not proof of universal completeness. Missing required coverage or incomplete/malformed
+returns remain unverified. Named specialist focus supplements the whole-feature roles; never replace
+integration/coherence review with isolated sections that nobody reconciles.

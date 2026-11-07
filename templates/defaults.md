@@ -1,6 +1,4 @@
-# Adopted on the owner's behalf — {{NAME}}
+# Defaults, fixes and slots — {{NAME}}
 
-Append-only ledger of every default (D), fix (F) and slot (S), one line each, numbered once. A veto
-adds `· vetoed <date> — "<owner's words>"` to the line; the line itself is never deleted.
-
-Shape: `- D3 · <date> · <the sentence> · ground: <pattern anchor / convention> · (a) … (b) … (c) … (d) … · does not decide: <owner-owned thing> · check: <router verdict | unverified>`
+One concise line per Dn, Fn or Sn: decision/change, source or ground, and relevant scope/reversibility
+reason. Per-run review status belongs in the run report/log. Defaults remain vetoable; no per-item agent.

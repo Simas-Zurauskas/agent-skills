@@ -1,72 +1,52 @@
 # blueprint-feature
 
-Define **one feature** for an app that already exists — completely, before anyone plans or builds it.
+Define one feature or change against an existing product. FEATURE.md describes failable behavior,
+what changes, what stays, material edge cases and compatibility. baseline.md cites relevant implemented
+behavior; questions.md keeps decisions only the owner can take. Stable sources/IDs and existing homes
+are preserved.
 
-`blueprint` writes a whole product's PRD before development. Once the app reaches that PRD, the PRD is
-frozen and the **built app becomes the reference**. From then on, new features and changes are defined
-with this skill: it learns what the app does today from the wiki and the code, and specifies the feature
-against it — what it adds, what it changes, what it must not break — until nothing is left to guess.
-
-## What you get
-
-A folder, normally `<task folder>/blueprint-feature/`:
-
-- **`FEATURE.md`** — the feature's PRD: summary, why, who, scope and not-doing, what exists today,
-  numbered requirements that can each fail, **changes to existing behaviour** (today → after), **what
-  must stay the same**, edge cases, data and compatibility (existing data, older app versions, offline,
-  other members), copy, rabbit holes.
-- **`questions.md`** — what only you can decide, each with suggested directions and a recommendation.
-- **`baseline.md`** — what the app does today that the feature touches, every fact cited to the code and
-  checked by a second agent.
-- `sources/`, `record/`, `work/` — your material verbatim, what each run did, and agent scratch.
-
-## How a feature goes
+## Usage
 
 ```
-/blueprint-feature init Pin challenges: let people pin a few challenges to the top of their list …
-    → maps the app, drafts FEATURE.md, grills it, writes the questions only you can answer
-answer in chat ("q-2: 1, q-4: no — keep it per person") or in questions.md
-    — or /blueprint-feature answer   (answers what it safely can; you can overrule each)
-/blueprint-feature resolve           → writes the answers in, checks each, grills what changed
-/blueprint-feature ready             → dry-run builder + red team + full grill; stamps Ready for planning
+/blueprint-feature init Let authors save private drafts and publish them later …
+/blueprint-feature add <new notes or decisions>
+/blueprint-feature questions          # independent scrutiny of changed behavior
+/blueprint-feature answer             # delegated ordinary/settled answers for veto
+/blueprint-feature resolve            # apply recorded answers
+/blueprint-feature ready              # check or reuse actual review, then planning gate
+/blueprint-feature auto               # one authorized sequence through ready
+/blueprint-feature status             # read-only
 ```
 
-Or hand it the loop: `/blueprint-feature auto` — answer, resolve and grill until nothing new comes up,
-then `ready`; it stops only for questions it may not answer for you (prices, legal, minors' data, and
-anything where your own sources disagree).
+In Codex use `$blueprint-feature` or plain language. Commands can be chained without paying for a new
+review at each boundary. `init soft` stops at the draft; `questions full` explicitly requests fresh full
+scrutiny. Apply supplied decisions before final review. Serious unknowns are surfaced early; ordinary
+choices are labelled, reversible defaults you can veto with `drop D3` or replace with `D3: …`.
 
-More material later — `/blueprint-feature add <notes>`. Where are we — `/blueprint-feature status`.
+## Quality and effort
 
-In Codex: `$blueprint-feature init …`, or ask in plain words.
+One fresh combined reviewer for small local reversible changes; builder and adversary for interacting
+or consequential features; focused specialist/mapping help only where actual breadth or hazard needs it.
+No mandatory per-finding routers, cold readers or answer checkers. Required review still examines intent,
+source facts, access/data preservation, lifecycle and whether planning would need a product guess.
 
-## How it avoids holes
+Each new promise must protect a requested outcome against a concrete reachable failure. Optional
+hardening/scalability or conflict policies are not automatically scope. Keep engineering mechanisms for
+planning/building. Evidence of a real threat to the requested guarantee is not waived for cost.
 
-- **Several agents attack the draft in parallel**, each with one lens: the builder who must not guess,
-  the hostile tester, collisions with the existing app, lifecycle and compatibility, who it's for.
-- **It takes ownership.** Most findings never reach you: anything the code answers becomes a cited product
-  fact; every ordinary product call is decided by the run — on the app's own patterns, keeping today's
-  behaviour, or the simplest fit — and listed as a labelled default you can veto (*"drop D3"*, *"D3: …"*);
-  wrong text is fixed. **Questions are only for what is serious**: money, legal or privacy posture, what is
-  kept and for how long, who can see what, scope added or dropped, taking away what users have, or your own
-  words disagreeing. A **second agent re-decides every finding blind**, and **every question is read
-  cold** by a fresh agent before you see it.
-- **Its real job is that the feature adds up**: every actor walked end to end — discovering it, first use,
-  everyday use, changing their mind, the thing going away, coming back — with no step left uncovered.
-- **`ready` has a fresh engineer agent try to plan the feature from `FEATURE.md` alone** and list every
-  guess it had to make, while a red team on a different model hunts contradictions, silent changes and
-  untouched neighbours.
+`ready` reuses coverage only when final inputs and risk still match; material corrections get targeted
+independent rechecks. No known material definition gaps after the recorded checks is not implementation,
+runtime security, deployment or release certification. Actual project authority is respected; code
+proves implemented behavior, not intent, and a default branch does not prove deployed state.
 
-It never claims a spec is complete — `ready` means *no known holes after these checks*.
-
-## What it will not do
-
-Write code or tickets, plan the implementation, edit the wiki or the repos, read a frozen PRD as truth,
-use Notion, commit, or interrogate you mid-run.
-
-## Install
+## Install and checks
 
 ```
-ln -s ~/dev/ai/SKILLS/blueprint-feature ~/.claude/skills/blueprint-feature   # Claude Code
-ln -s ~/dev/ai/SKILLS/blueprint-feature ~/.agents/skills/blueprint-feature   # Codex
+ln -s ~/dev/ai/SKILLS/blueprint-feature ~/.claude/skills/blueprint-feature
+ln -s ~/dev/ai/SKILLS/blueprint-feature ~/.agents/skills/blueprint-feature
+python3 scripts/bf.py selftest
 ```
-Needs `python3` (stdlib only) and `git`. Check: `python3 scripts/bf.py selftest`.
+
+Requires Python 3 (stdlib only), git and a real independent-agent route on the current harness.
+No code, plans, tickets, commits or external document writes are produced by this skill. See SKILL.md
+and HISTORY.md. Existing v6 homes require no migration.

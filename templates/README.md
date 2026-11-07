@@ -7,4 +7,4 @@ The definition of one feature, made with the `blueprint-feature` skill.
 - `baseline.md` — what the product does today that this feature touches, with code anchors.
 - `sources/` — the owner's words and material, verbatim.
 - `record/` — what each run did (`log.md`, `runs/`). Keep it.
-- `work/` — agent briefs and returns; scratch, safe to delete.
+- `work/` — agent briefs and returns. Deleting relied-on review evidence requires fresh review before reuse.

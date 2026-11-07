@@ -1,124 +1,96 @@
 ---
 name: blueprint-feature
-description: 'Specs one new feature or change for an app that already exists, after its PRD is frozen. Use for "spec this feature", "define this change properly", "grill this feature idea", "what are we missing in this feature", "answer what you safely can", "apply the answers", "is this feature ready to plan". Learns today''s product from the wiki and the code (never a frozen PRD or Notion), writes FEATURE.md with numbered failable requirements, changes to existing behaviour, what must stay the same, edge cases, compatibility and exclusions, then grills it with independent agents, decides ordinary calls itself and asks only serious questions, writes answers back with a blind checker, and gates on a dry-run builder and a red team. Kept in the task folder under blueprint-feature. Commands: init, add, questions, answer, resolve, status, ready, auto. Not for a whole new product (use blueprint) or for implementation planning.'
+description: 'Define one feature or change for an existing app: learn current behavior, write failable requirements, preserve affected behavior, decide ordinary details and surface serious owner decisions. Use to spec a feature, grill it, apply answers or check readiness for planning. Commands: init, add, questions, answer, resolve, status, ready, auto. Not a whole-product PRD, implementation plan or code build.'
 ---
 
 # blueprint-feature
 
-One feature, defined completely **before** anyone plans or builds it, for a product that already exists.
-The original PRD is history — frozen once the app reached it. From then on **the built product is the
-reference**, so this skill learns what exists from the project's wiki and code, cites it, and specifies the
-feature against it: what it adds, what it changes, and what it must not break.
+Define one feature against the product that exists today. Produce `FEATURE.md`: what it adds, changes,
+and must not break. The goal is a coherent definition with no known material product decisions left to
+guess, ready for implementation planning. Engineering design and implementation assurance come later.
 
-The output is a folder holding `FEATURE.md` — the feature's own PRD — plus its questions, the product facts
-it rests on, and the record of every run. When `ready` passes, the feature is defined well enough to move
-on to implementation planning, which is **beyond this skill**.
-
-**It never guesses.** Every sentence in `FEATURE.md` is exactly one of:
-
-1. **sourced** — the owner's words, a source they gave, or an answer they gave or delegated;
-2. **a product fact** — what the app does **today**, cited to code (`baseline.md`, verified). Code is
-   evidence of today, never of what the feature should do;
-3. **a labelled default** — `Default D3 (existing pattern — … — adopted <date>): …`, vetoable with
-   *"drop D3"*;
-4. **an admitted gap** — `[NEEDS CLARIFICATION: … → q-04]` with a written question — only for what is serious.
-
-**It takes ownership.** This is one feature, not a product's PRD: the run decides the feature's ordinary calls
-itself — on the product's own patterns, keeping today's behaviour, or the simplest fit — labelled and listed
-so the owner can veto any with a word. Its real job is that **the feature adds up and nothing is missing**.
-Only serious matters become questions: money, legal or privacy posture, what is kept and for how long, who can
-see what, scope added or dropped, taking away what users have, the owner's own words disagreeing
-([reference/rules.md](reference/rules.md) §4).
+Read [reference/rules.md](reference/rules.md) and the requested command. Read the other references only
+when needed. Follow genuine project guides; code proves implemented behavior, never future intent or
+what is deployed. A project may still designate a PRD or another document as its product authority.
 
 ## Commands
 
-| Command | Reads | What it does |
+| Command | Procedure | Outcome |
 |---|---|---|
-| `init <the feature in words> [files]` | [commands/init.md](commands/init.md) | Captures the request, maps the parts of the product the feature touches (cartographer agents + a blind verifier), drafts `FEATURE.md`, grills it, writes the questions. Runs end to end; **`init soft`** stops after the draft for the owner's look |
-| `add <material>` | [commands/add.md](commands/add.md) | New material or decisions. New owner material supersedes text it contradicts (quoted); `add soft` asks instead |
-| `questions [full]` | [commands/questions.md](commands/questions.md) | The grill, sized to what changed (`full`: everything). Every finding disposed — product fact, default, fix, slot, question or a named discard — re-routed blind, and every question read cold before it is written |
-| `answer [soft]` | [commands/answer.md](commands/answer.md) | The owner delegates: answers the open questions it can defend, labelled, challenged by a second agent, left at `Answered` for the owner's veto. `soft`: only what the document, sources or code already settle |
-| `resolve` | [commands/resolve.md](commands/resolve.md) | Writes `Answered` questions into `FEATURE.md`, each change checked by a blind agent, then grills what changed |
-| `status` | [commands/status.md](commands/status.md) | One screen: open questions, markers, unverified items, drift against the current code, readiness, next step. **Writes nothing** |
-| `ready` | [commands/ready.md](commands/ready.md) | The gate before planning: re-verifies the product facts, full grill, a dry-run builder that tries to plan from `FEATURE.md` alone, a red team, a faithfulness check. Stamps `Ready for planning` only when nothing is left open |
-| `auto [rounds]` | [commands/auto.md](commands/auto.md) | The owner delegates the loop: `answer` → `resolve` until nothing new comes up (default at most 3 rounds), then `ready`. Leaves for the owner every question it may not answer |
+| `init <feature> [material]` | [init](commands/init.md) | Map relevant product, draft complete ordinary behavior, surface serious questions, review when the definition is settled. `soft`: stop after draft. |
+| `add <material>` | [add](commands/add.md) | Capture and apply new material, then review materially changed outcomes. `soft`: ask before superseding contradictory text. |
+| `questions [full]` | [questions](commands/questions.md) | Independently examine gaps, close ordinary ones, ask only consequential owner decisions. `full`: re-examine the whole feature. |
+| `answer [soft]` | [answer](commands/answer.md) | Record delegated, defensible answers for veto. `soft`: only answers already entailed by evidence. |
+| `resolve` | [resolve](commands/resolve.md) | Apply Answered rows faithfully and review affected behavior. |
+| `status` | [status](commands/status.md) | Read-only status, freshness and next action; no dispatch or reconciliation. |
+| `ready` | [ready](commands/ready.md) | Check freshness and substantive coverage; reuse valid reviews, run missing ones, stamp only when no material blocker remains. |
+| `auto [rounds]` | [auto](commands/auto.md) | Apply supplied/settled answers, decide ordinary gaps and proceed to ready. One correction/recheck by default; rounds is a ceiling. |
 
-**To run a command:** read [reference/rules.md](reference/rules.md) and the command file, and follow its
-phases end to end; read the other `reference/` files when a phase cites them. Do not summarise a command
-file and improvise from the summary. Every agent prompt comes from a template in [briefs/](briefs/) — fill
-it, never rewrite it.
+Answers and vetoes in any write invocation are recorded first. A plain request naming no home starts
+`init`; resume a paused matching feature. With several plausible homes, ask which one. Do not require
+the owner to type intermediate commands when the invocation already authorizes the sequence.
 
-Answers, rejections and vetoes can arrive in any command's invocation — *"q-3: 2; q-5: no, keep it per
-person; drop D3"* — and are recorded first ([reference/record.md](reference/record.md) §5).
+## Before a write
 
-**When the request is ambiguous:** no feature home → `init`; a paused `init` → resume it; otherwise ask once —
-*grill it for more questions, write in the answers already given, or check whether it is ready?*
+1. Resolve `<task folder>/blueprint-feature/` by [record §1](reference/record.md). Scaffold if new:
+   `python3 <skill>/scripts/bf.py scaffold <home> --name "<name>"`.
+2. Probe a real write inside the home; `bf.py lock <home>` checks recorded writers; it does not acquire an atomic lock. Record one run
+   entry for a chained invocation; embedded commands share it. See [record §4](reference/record.md).
+3. Save the invocation and immutable source material; record answers, vetoes and owner edits. Read
+   the workspace/repo guides, relevant wiki/contracts, and current commit/branch/dirty state.
+4. Run `bf.py lint <home>`, `changed` and `anchors` as applicable. Preserve edits made by others; report
+   human-introduced inconsistencies rather than silently rewriting them.
 
-## The folder
+`<skill>` is the directory containing this file, including when reached through a symlink.
+`status` skips all writes/probes and uses its own procedure.
 
-The **feature home** is `<task folder>/blueprint-feature/` — [reference/record.md](reference/record.md) §1
-resolves it (a path the owner names, the workspace's task-folder convention, or
-`blueprint-features/<slug>/blueprint-feature/`). One feature per home.
+## Author once, review proportionately
+
+The author can inspect the baseline and draft complete behavior, including labelled ordinary defaults,
+before review. No mandatory mapping/verifier pair, per-finding router, cold reader, answer drafter or
+answer-application checker. Their useful questions belong in substantive review.
+
+| Feature | Default independent coverage |
+|---|---|
+| Local, reversible, known narrow effects; no material access/data/financial/compatibility hazard | One fresh combined reviewer: intent, current-product facts, buildability and preservation. |
+| Multiple interacting surfaces or a material permission, data, financial, lifecycle or release hazard | Two fresh reviewers: builder/current-product and adversary/intent/risk. |
+| Broad or complex change | Split mapping where it saves real work; retain the two complementary reviews and add specialist coverage only for a distinct hazard they cannot adequately cover. |
+
+Choose by consequence, blast radius and reversibility, never requirement count. The exact timing,
+coverage, scope filter, correction bound and reuse rules live in [grill](reference/grill.md).
+Before multiple dispatches, say how many and what distinct work they cover. Use real separate contexts
+on [Claude Code or Codex](reference/dispatch.md). Missing review stays explicit and blocks ready.
+
+Apply supplied decisions before paying for final review. If serious decisions block a settled draft,
+write them and stop without exhaustive review of behavior that will change. An explicit request to
+grill still gets useful independent scrutiny. `init` followed by `ready` in one invocation uses one
+review boundary; `ready` does not repeat a clean current review.
+
+Every new promise must protect a requested outcome against a concrete reachable failure. Choose the
+simplest adequate behavior. Do not turn optional hardening, scalability mechanisms or conflict policies
+into feature requirements because a reviewer can imagine them. See [rules §4](reference/rules.md).
+
+## Files and quality floor
+
+Keep existing homes and IDs compatible; no migration is needed.
 
 ```
 blueprint-feature/
-  FEATURE.md        the feature PRD — the deliverable
-  questions.md      every question, q-01 … in order, with status and answer
-  baseline.md       what the product does today that this feature touches — cited, verified
-  sources/          the owner's words and material, verbatim, hashed (INDEX.md)
-  record/           log.md · defaults.md (everything adopted on the owner's behalf) · runs/ · snapshots/ · ids.json
-  work/             the owner's message per run, frozen agent briefs, agent returns — scratch
+  FEATURE.md        failable FR, changes CH, preservation KEEP, relevant edge/compatibility decisions
+  questions.md      serious decisions, answers and status
+  baseline.md       relevant current-product facts with code evidence
+  sources/          immutable owner material and INDEX.md
+  record/           log, defaults, run reports, IDs and snapshots
+  work/             frozen briefs, raw returns and scratch
 ```
 
-## Before any command — five checks
+[Feature shape](reference/feature-shape.md), [baseline](reference/baseline.md),
+[finding handling](reference/dispositions.md) and [records](reference/record.md) define the formats.
+Use the existing checker for IDs, quotes, anchors, lint, counts, locks and snapshots. Its structural
+success does not prove substantive review or deployment.
 
-`<skill>` is this skill's directory (resolve it from where this file was loaded; symlinks are fine).
-
-1. **Which feature home?** Resolve it ([reference/record.md](reference/record.md) §1); `init` scaffolds it
-   (`bf.py scaffold`) before checks 3 and 5. Never two features in one run.
-2. **Can it write?** A real write probe in the home (record.md §1). Failure halts before any work. `status`
-   skips this.
-3. **Is another run writing?** `python3 <skill>/scripts/bf.py lock <home>` — exit 3 halts this run (unless the
-   owner says that session stopped), exit 1 means an abandoned entry to close ([record.md](reference/record.md)
-   §4). `status` skips this.
-4. **Which product, at which commit, under which rules?** The workspace's agent guides (`AGENTS.md`,
-   `CLAUDE.md` at the root and in each repo), its wiki or docs, each code repo (`git rev-parse --short HEAD`,
-   branch, the released ref), and the owner's standing rules your harness has loaded
-   ([reference/rules.md](reference/rules.md) §8). **A frozen PRD is not a product source, and this skill
-   never reads Notion.**
-5. **Is the folder sound?** `python3 <skill>/scripts/bf.py lint <home>`. Problems a human introduced are
-   reported and worked around, never "fixed" over their text.
-
-## Agents
-
-Every check this skill calls independent is **a separate agent dispatch, never the same context narrating a
-second opinion** — [reference/dispatch.md](reference/dispatch.md) is the single home of how to dispatch on
-Claude Code and on Codex, the probe ladder, models, waves, and what to write when no second agent is
-available (`unverified`, counted, said first — never passed off as checked). The orchestrator (you) reads and
-writes the feature home; **agents only read** and return text; independent agents go out together.
-
-## Cost — sized to the change, said before it is spent
-
-Before any phase that dispatches more than one agent, print one plain line: what is being checked, how many
-agents, why.
-
-| Run | Agents (typical) |
-|---|---|
-| `init`, small change (one part, ≤ ~5 requirements) | 1 cartographer + 1 verifier · 2 grill passes + 1 faithfulness · routers (1 per 15 findings) · cold readers (1 per 10 questions) |
-| `init`, larger feature | 2–4 cartographers + 1 verifier · 4 grill passes + 1 faithfulness · routers · cold readers |
-| `add`, `resolve`, bare `questions` | 2 grill passes · routers · cold readers · `resolve` adds 1 checker per 8 answers |
-| `answer` | 1 drafter per 10 questions + 1 challenger per 10 drafted answers |
-| `questions full`, `ready` | 4 grill passes (2 for a small change) · `ready` adds a dry-run builder, a red team, a faithfulness check, a verifier |
-
-Never shrink a check to save cost; shrink the attack surface and say what was left for next time.
-
-## What this skill does not do
-
-- **No code, no repo writes, no wiki writes.** It reads code to know the product and writes only inside the
-  feature home. Wiki drift it notices is reported as the exact correction for whoever maintains the wiki.
-- **No implementation plan, tickets, estimates or tests.** `FEATURE.md` says *what*, never *how*.
-- **No frozen PRD as evidence, no Notion, no network.**
-- **No commits, pushes, messages or deploys.** The folder is the owner's to keep or promote.
-- **No interrogation.** Runs write what they found and stop; the only stops are `init`'s interview when the
-  owner gave almost nothing, and `init soft`'s draft review.
-- **Nothing declares the feature finished except `ready`**, and any later write clears its stamp.
+Write only in the feature home. No code, tickets, estimates, implementation plans, wiki edits outside
+the home, commits, pushes, deployments or external messages. Local evidence is the default; access an
+external project authority only through an available authorized connection. Never invent unavailable
+evidence or edit an external authority from this skill. Implementation tests and runtime certification
+are outside this definition workflow. Only `ready` stamps planning readiness.

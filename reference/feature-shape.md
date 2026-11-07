@@ -20,13 +20,13 @@ holds and how its lines are written; `bf.py lint` checks the shapes.
 | `## Must stay the same` | `KEEP-n` lines: existing behaviour this feature touches and must not change | — |
 | `## Edge cases` | Empty, first-run, error, offline, slow, many, permissions, ties and ordering, two people acting at once, day boundaries and time zones where time matters — each a decision, written | — |
 | `## Data and compatibility` | **The compatibility table** (§9), then: what is stored, who can see it, how long it lives, what deletion takes with it | — |
-| `## Copy and content` | Every new user-visible string or asset: where, when, what it must say. Wording is illustrative unless the owner gave it; final wording is a slot (§6) | — |
+| `## Copy and content` | Every new user-visible string or asset: where, when, what it must say. Use supplied or delegated wording; a genuinely owed asset is a bounded slot (§6) | — |
 | `## Rabbit holes` | Implementation traps and the call already made about each — never a call nobody made. Empty: `None yet.` | — |
 | `## Open questions` | Generated from `questions.md` at every write: each `Open`/`Answered`/`Flagged` row touching the feature, `q-NN — title (status)`. Never typed under | — |
 
 A block that does not apply carries one line saying so (`None — the feature stores nothing new.`). A
-block the sources do not address yet carries `Not covered yet.` and the grill fills it — **`init` writes
-a marker only for a gap in what the owner did say**, never one per empty block.
+block with a real unresolved definition gap carries `Not covered yet.` or a linked marker. Draft ordinary
+behavior directly; do not leave it blank solely to make another agent fill it. No marker per empty block.
 
 ## 2. Requirements
 
@@ -88,9 +88,11 @@ One labelled sentence, one decision, in the block where it bites — as its own 
   change to what users have, naming the option it passed over:
   `- Default D8 (simplest fit — over "pins also sync live to open screens" — adopted 2026-10-26): a pin made on one device shows on the others the next time their list loads.`
 - `Dn` numbers come from `bf.py ids --next D` and are never reused; *"drop D3"* is the owner's veto.
-- Add `, unverified` after the date when no second agent checked the routing.
-- Every default has a line in `record/defaults.md`: grounding, the four attestations, what owner-owned
-  thing it does not decide, and the second check's verdict.
+- Add `, unverified` when required substantive review was unavailable/incomplete. Planned review of a
+  Draft is recorded as pending; it is never claimed complete merely because counts are zero.
+- Every default has one concise `record/defaults.md` entry: decision, ground, scope/reversibility
+  evidence. Record per-run review status in the report/log. Apply rules §4; no per-item reviewer or
+  attestation form.
 - A default never overrides existing text, never adds a capability, actor, permission, channel or state
   beyond the gap it fills, and never names a figure, vendor or standard no source or product fact gives.
 
@@ -101,20 +103,22 @@ One labelled sentence, one decision, in the block where it bites — as its own 
 - Design slot S3 — the pin mark's glyph and its pressed state · owner picks in the design lab before build.
 ```
 
-A slot says what is owed, its shape and bounds, and who supplies it. Decisions *about* content — whether a
-message exists, when it shows — are requirements or questions, not slots.
+A slot says what is actually owed, its shape/bounds and supplier. Honor supplied/delegated content and
+design choices; do not require another owner approval when they already authorized the run to choose.
+Decisions about whether a message exists or when it shows are behavior, not content slots. A bounded
+future asset does not block planning when its required behavior and constraints are defined.
 
 ## 7. Markers
 
 ```
-[NEEDS CLARIFICATION: FR-5 — is there a limit to how many challenges one person can pin? → q-03]
+[NEEDS CLARIFICATION: FR-5 — which collaborators may see the new notes? → q-03]
 ```
 
 - Names the entity (requirement, block, actor), then the gap.
 - Ends `→ q-NN`, or `→ asked next run` between the run that found the gap and the run that writes its
   question. A gap whose default the owner vetoed ends `→ asked next run (vetoed D3)` and is never
   defaulted again.
-- A marker blocks nothing; it is counted by `status` and `ready`.
+- A marker blocks planning readiness until settled; it need not prevent unrelated definition work.
 
 **A marker is removed only by one of these, and the log line names which:**
 
@@ -129,7 +133,8 @@ message exists, when it shows — are requirements or questions, not slots.
    (cite the discard).
 
 Every other outcome keeps the marker, linked to a question. A run never removes a marker without one of
-these, and never writes an answer in without a question row.
+these. Question answers retain their rows; supplied new material and eligible defaults do not need
+manufactured question rows.
 
 ## 8. IDs, provenance and depth
 
@@ -148,32 +153,15 @@ these, and never writes an answer in without a question row.
   Lines `init` writes from the first request carry none; the request is their source.
 - **Depth** of a line: 1 for `init` lines and owner material; for a line from `q-NN`, that row's `Depth`
   plus 1. A question's `Depth` is the deepest line its grounding quotes (1 for a gap grounded in an
-  absence). Depth bounds the derivative chain ([grill.md](grill.md) §4).
+  absence). Depth is legacy traceability; correction rounds are bounded by [grill §4](grill.md), never by
+  silently dropping a real serious decision.
 - No run id, phase code or check name ever appears in `FEATURE.md` ([rules.md](rules.md) §9).
 
-## 9. The compatibility table
+## 9. Relevant compatibility decisions
 
-`## Data and compatibility` opens with one row per new or changed record, message, notification or
-server call the feature introduces — or `None — the feature adds or changes no stored data, message or
-call.`
-
-```
-| What changes | Someone on an older app version sees | The new app against a backend not yet updated | Data that exists on launch day |
-|---|---|---|---|
-| A person's pins (new, per person) | Nothing — pins are private to the new app | Pin button hidden until the backend answers | No pins; lists look as today |
-```
-
-Each cell is a decision like any other: sourced, a default, or a marker. Where the product has a
-contract-break check or a minimum-version gate (baseline § Constraints), the table names how the feature
-stays within it.
-
-## 10. Single home, and the acceptance test
-
-Product facts live in `baseline.md`, decisions in `FEATURE.md`, questions and answers in `questions.md`,
-defaults/fixes/slots also in `record/defaults.md`. **A requirement must be buildable from `FEATURE.md`
-itself**, so where a link would leave it underspecified the governing fact is restated inline with its
-`B-n`.
-
-The acceptance test: someone who has never seen the project, given `FEATURE.md`, `baseline.md` and the
-code, can say what changes, what must not, what each part must and must not do — and the only things
-they would still have to guess are the open questions, listed. `ready`'s dry-run builder runs exactly this.
+Use a small table covering actual supported combinations and affected lifecycle, such as existing data,
+old/new clients or servers, different actors, deletion/export and reversal. Every relevant cell needs
+observable behavior, sourced intent or an eligible default; a serious unknown links its question.
+Do not copy a universal matrix of unreachable combinations. State why omitted dimensions are irrelevant.
+When none apply, `None — <why>` is valid. No blanket promise of offline/rolling-version support that the
+product does not have. Keep deployment unknowns separate from implemented facts (baseline §2).

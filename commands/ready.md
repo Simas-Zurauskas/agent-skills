@@ -1,74 +1,33 @@
-# ready — the gate before implementation planning
+# ready — planning gate, without repeated clean review
 
-`ready` decides whether the feature is defined well enough to plan. It re-checks the product, grills
-everything, and — the test no reader replaces — has a fresh builder try to plan the feature from
-`FEATURE.md` alone and report every place it had to guess. It stamps `Ready for planning` only when every
-check comes back clean, and never claims completeness: *no known holes after these checks*. Read
-[../reference/rules.md](../reference/rules.md).
+Read [rules](../reference/rules.md), [grill](../reference/grill.md), and
+[record](../reference/record.md). This is definition assurance, not implementation/release certification.
 
-## D1 — Preconditions (mechanical; stop at the first that fails, and say what to run)
+1. Record supplied answers first and apply clear authorized decisions before judging readiness. Apply
+   queued unambiguous Answered rows via resolve within this invocation; do not demand a separate typed
+   command. If serious Open/Flagged decisions or unsupported evidence block the definition, list them
+   and stop without another exhaustive review. Keep the entry closed/paused correctly.
+2. Inspect fresh counts/lint/anchors, actual code changes and new readers/writers on touched records.
+   Refresh relevant facts and Product state. A snippet match is not semantic verification. Unknown
+   deployment is disclosed; only a materially dependent definition needs the missing release evidence.
+3. Confirm the final risk tier and applicable coverage. Reuse clean input-current substantive reviews
+   per grill §4. Run only missing/invalidated roles or affected outcomes. Small: combined reviewer.
+   Broader/riskier: builder plus adversary. Additional specialist only for a distinct uncovered hazard.
+   No automatic full grill, new baseline verifier, faithfulness agent or red-team duplicate after
+   adequate current coverage. A changed risk/contract boundary needs adequate broader review.
+4. Verify findings against raw evidence and scope. Correct the requested outcome without inventing
+   optional promises. One correction batch plus fresh targeted recheck by default; no clean stamp for
+   a correction never reviewed, an incomplete return or an unresolved substantive disagreement.
+5. Immediately before stamping: no Open/Answered/Flagged rows, unresolved markers, unverified coverage,
+   material unsupported claims, relevant stale/recheck facts or incomplete blocks. `bf.py lint` must
+   have no errors or coverage gaps. Required substantive coverage must be clean for final inputs even
+   when mechanical counts are zero. Record actual coverage/freshness, not a completeness assertion.
+6. Write `Status: Ready for planning — <date> · <product state>`. Ordinary defaults stay vetoable and do
+   not require a new acceptance. A material serious proposal still awaiting owner-required approval is
+   a blocker, so remain Draft. Honor specific decision delegation and legacy review windows; an old
+   pending-review label is not proof of approval. Counts/lint, snapshot and close. A status-line-only
+   stamp does not invalidate clean review inputs.
 
-SKILL.md's checks; open the entry; save the invocation; record chat answers. `bf.py counts` and `bf.py lint`:
-
-- an `Answered` row not yet applied → *"run `resolve` first"* (`auto` does this for you);
-- `Open` or `Flagged` rows, or markers → **not ready**: list them and stop — the checks below would only find
-  what is already known.
-
-Stopping here appends `- closed <time> — not ready: <reason>` to the entry, so the next command is not locked
-out.
-
-## D2 — Re-verify the product
-
-`bf.py anchors <home>`. Every **stale** fact, every fact marked **recheck**, and a search for new code that
-reads or writes the touched records since the recorded commits go to one baseline verifier
-([../briefs/baseline-verifier.md](../briefs/baseline-verifier.md), with its `SINCE_BLOCK` filled). Wrong facts are struck
-and corrected; every `CH`/`KEEP`/default citing one becomes a candidate in D4. Then rewrite the header's repo
-lines and `FEATURE.md`'s `Product:` line to the current commits. Also list other feature homes whose baselines
-cite the same files (baseline.md §4.8) — each becomes a lens-3 input.
-
-## D3 — Four independent attacks (cost line first; waves as the harness allows)
-
-1. **The full grill** — 4 passes, or 2 for a small change ([../reference/grill.md](../reference/grill.md) §1).
-2. **The dry-run builder** ([../briefs/dry-run-builder.md](../briefs/dry-run-builder.md)) — a fresh agent given
-   `FEATURE.md`, `baseline.md`, the repos and the project guides, **never `questions.md` or the record**. It
-   places every line in the code, outlines a plan, and lists every decision it had to make that the spec,
-   the code and one obvious convention do not settle.
-3. **The red team** ([../briefs/red-team.md](../briefs/red-team.md)) — a different model; the other model
-   family's CLI where it works ([../reference/dispatch.md](../reference/dispatch.md) §4).
-4. **Faithfulness** ([../briefs/faithfulness.md](../briefs/faithfulness.md)) over the whole of `FEATURE.md`.
-
-## D4 — Dispose everything
-
-Every finding becomes a candidate — dry-run guesses as `lens: dry-run`, red-team defects as `lens: red-team`
-— through [questions.md](questions.md) G3–G6. Faithfulness findings on text a run drafted and nobody has
-accepted are fixed in place; on text from the owner's words or an applied answer they become questions.
-
-**If D4 wrote anything into `FEATURE.md`** (a fix, a default, a product fact's line) — the usual case, since the
-run closes most of what the dry run and red team find itself — that text has not been attacked: run the delta
-grill (2 passes) over it and dispose its findings; repeat while a round still writes, **at most twice more**.
-A round that writes a question, or a third round that still writes, makes the verdict *not ready* — and ends the
-re-grill rounds there: the next `ready` re-attacks everything anyway.
-
-## D5 — The verdict
-
-**Ready** when, after D4: no `Open`, `Answered` or `Flagged` rows, no markers, no unverified items
-(`bf.py counts`), no stale facts, and `bf.py lint` reports no errors and no coverage gaps. Then write the
-status line:
-
-- `Status: Ready for planning — 2026-10-27 · rep-app c41d0e2 (dev)`
-- or, when delegated answers or defaults were adopted since the owner last accepted:
-  `Status: Ready for planning — pending your review: 6 answers I gave for you, 4 defaults — 2026-10-27 · rep-app c41d0e2 (dev)`
-
-The checks that ran are named in the log's `ready` line, not in the spec.
-
-Log `ready`; **standalone only:** snapshot, `closed`. **Not ready** otherwise: the status stays `Draft`, and the reply lists what
-is left — the new questions first.
-
-**Reply on Ready:** the verdict line; what the feature contains (counts); **everything decided on the owner's
-behalf** — delegated answers (owner's-list ones first) and defaults, riskiest first, numbered for veto, with
-*"say "accept" to clear the pending review, or "q-4: …" / "drop D3" to change any"*; anything the depth bound
-discarded; facts the feature relies on that users do not have yet (unreleased); other features in flight on
-the same screens; and *"Next: implementation planning — start from `FEATURE.md`; `baseline.md` holds the code
-anchors."* If the home is in a scratch folder (record.md §2), say where the project keeps durable docs.
-
-Any later write to `FEATURE.md` resets the status line to `Status: Draft`.
+Otherwise remain Draft, explaining exactly what is unfinished. Reply with the planning verdict,
+feature link, visible defaults/questions, actual checks/reused coverage, unknown release state where
+relevant and next useful step. Never imply tests, deployment or runtime quality were verified here.

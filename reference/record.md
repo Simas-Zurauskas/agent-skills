@@ -1,139 +1,107 @@
-# The record — where things live and how runs leave a trace
+# Records and existing-home compatibility
 
-## 1. Resolving the feature home
+## 1. Home and writes
 
-From the workspace the command was run in, in this order:
+Use the owner's named home, or `<task folder>/blueprint-feature/`, then the project's task convention,
+then `blueprint-features/<slug>/blueprint-feature/`. Reuse a matching paused home; ask only when multiple
+homes are plausible. One feature per home. `bf.py scaffold` never overwrites existing files.
+Probe a real temporary write inside the home, not permission bits. Do not change permissions to force it.
+All writes stay inside the feature home; no surrounding wiki/task changes.
 
-1. **A path the owner names.** A folder named `blueprint-feature` is the home; any other folder (a task
-   folder) gets `blueprint-feature/` inside it. Create only that leaf.
-2. **Existing homes:** `find . -maxdepth 7 -path '*/blueprint-feature/FEATURE.md' -not -path
-   '*/node_modules/*'`. For commands other than `init`: exactly one → it; several → list them (name,
-   status, path) and ask which, once. For `init`: reuse an existing home when the owner named its task or folder, or when its last log
-   entry is a **paused `init`** (resume it — §4); otherwise a new feature gets a new home.
-3. **`init` — the workspace's task convention.** Read the agent guides for where task folders live (e.g.
-   *"each task's working folder is `wiki-rep/tasks/<nnn>-<short-name>/`"*). If the owner named a task
-   (*"task 017"*), use that folder. Otherwise create the next free number with a 2–4 word kebab-case slug,
-   following the convention, and **say the path in the reply**. Write nothing in the task folder outside
-   `blueprint-feature/` — what the convention asks of the task itself (a `NOTES.md`, a `qa/` folder) is the
-   task owner's, not this skill's. A home inside the wiki's task folder is not a wiki write: the skill never
-   edits wiki pages.
-4. **No convention:** `blueprint-features/<slug>/blueprint-feature/` at the workspace root; say so.
+## 2. Files
 
-**Can it write?** Probe with a real write, not permission bits — `f=$(mktemp "<dir>/.bf-probe.XXXXXX") &&
-rm "$f"` on the home or the folder it will be created in. Failure halts before any work, naming what a
-person would do; a run never changes permissions itself.
+Keep FEATURE.md, questions.md, baseline.md, sources/INDEX.md, record/log.md, defaults.md, ids.json,
+runs/, snapshots/ and work/. Existing v6 homes, IDs, statuses, provenance and pending-review labels stay
+readable. No migration, renumbering or deletion of owner records. Old process reports are history;
+reuse only review evidence that meets current coverage/freshness requirements, never infer approval.
 
-Create with `python3 <skill>/scripts/bf.py scaffold <home> --name "<Feature name>"` (copies the templates,
-never overwrites).
+Sources are immutable numbered copies with file, origin, captured date and sha256-12 in INDEX.md.
+Capture the invocation verbatim under work/<id>/invocation.md. New source revisions get new numbers.
+Never copy personal secrets or real users' private data. Work holds frozen briefs and raw returns;
+keep any relied-on return at its referenced path. If the task home is scratch, ready names where the
+project keeps durable documents without moving/committing them.
 
-## 2. The folder
+## 3. One compact log
 
-| Path | What | Durable? |
-|---|---|---|
-| `FEATURE.md` | The feature PRD | yes |
-| `questions.md` | Every question row, `q-NN` order, never re-sorted | yes |
-| `baseline.md` | Product facts, `B-n` | yes |
-| `sources/INDEX.md` + `sources/NNN-<slug>.<ext>` | Each source verbatim: the owner's words as typed, files copied in. `INDEX.md` columns: # · file · what it is · where it came from · captured (date) · sha256-12 (`bf.py hash`). A revision is a new number, never an overwrite | yes |
-| `record/log.md` | Append-only run log (§3) | yes |
-| `record/defaults.md` | The ledger of every `Dn`, `Fn`, `Sn` (dispositions.md) | yes |
-| `record/runs/<run-id>.md` | Each run's full report (§6) | yes |
-| `record/snapshots/<run-id>/` | The three main files as each run left them (`bf.py snapshot`) — how the next run sees the owner's edits | yes |
-| `record/ids.json` | Every ID ever issued, and vetoes (`bf.py ids`) | yes |
-| `work/<run-id>/` | `invocation.md` (the owner's message, verbatim), frozen briefs `brief-*.md`, agent returns `ret-*.md`, drafts | scratch |
-
-**Nothing secret goes in it** — no tokens, keys, passwords, or personal data of real users; testers and
-other people are named by role. The skill commits nothing. If the home sits in a folder the project
-treats as scratch (for example a git-ignored tasks folder), `ready`'s reply says where the project keeps
-durable docs, so the owner can promote `FEATURE.md` and `baseline.md`.
-
-## 3. The run log — `record/log.md`
-
-Append-only, oldest first, never rewritten. **Run id:** `openssl rand -hex 3`. One entry per run:
+Append only. Headers MUST use the actual clock formatted `YYYY-MM-DD HH:MM` (for example
+`date '+%Y-%m-%d %H:%M'`), not ISO timestamps with T/seconds/offset: the checker parses this exact
+minute format. Include a six-hex run ID, current skill VERSION and reported writer model:
 
 ```
-## 2026-10-26 14:05 · init · a3f9c2 · blueprint-feature v2 · writer <model> · rep-app a7ca2ba (dev)
+## 2026-11-05 15:00 · init + ready · a3f9c2 · blueprint-feature v7 · writer <reported model>
 - open
-- source 001-request.md 9f2c1a0b3d4e
-- independence probe: succeeded via <route>
-- note wave 1 dispatched: 3 cartographers
-- baseline B-1…B-23 written · verified 21 · corrected 2 · dropped 1
-- item FEATURE.md FR-1…FR-9, CH-1…CH-3, KEEP-1…KEEP-4 written · depth 1
-- note wave 2 dispatched: grill 4, faithfulness 1
-- grill full · passes 4 · candidates 31 · attacked: all
-- funnel 31 → product 6 → fix 2 → default 5 → slot 1 → questions 7 → discarded 10
-- default D1…D5 · fix F1, F2 · slot S1 · question q-01…q-07
-- check router 3/3 returned · cold read 1/1 returned · models: <writer> / <checker>
+- source 001-request.md <hash>
+- baseline B-1…B-6 inspected · product <commit> clean · release unknown
+- item FEATURE.md FR-1…FR-5, CH-1, KEEP-1…KEEP-2 written · depth 1
+- note tier small: local/reversible, known consumers; 1 combined review
+- check combined · <actual route/model> · clean · coverage and inputs in run report
+- grill full · combined review 1 · attacked: all
+- ready no known material definition defects after recorded checks
 - snapshot a3f9c2
-- closed 2026-10-26 14:41
+- closed 2026-11-05 15:08
 ```
 
-**Line kinds — a closed list:** `open` · `source` · `independence` · `baseline` · `drift` · `item` · `grill` ·
-`funnel` · `default` · `fix` · `slot` · `question` · `discard` · `answered` · `left` · `applied` · `flagged` ·
-`vetoed` · `check` · `unverified` · `directive` · `snapshot` · `ready` · `note` · `paused` · `closed`. No
-paragraphs; explanations go in the run report.
+Keep existing line kinds for compatibility: open, source, independence, baseline, drift, item, grill,
+funnel, default, fix, slot, question, discard, answered, left, applied, flagged, vetoed, check,
+unverified, directive, snapshot, ready, note, paused, closed. Old counters can still find grill/ready.
+Use only meaningful lines; no per-finding heartbeat or full process transcript. Log actual dispatches
+and a heartbeat per wave. Do not log a planned review as completed. Nested/chained operations share
+one entry and report, closing only once.
 
-- `item` names what a write touched and the depth of what it wrote ([feature-shape.md](feature-shape.md) §8).
-- `open` before the first write; `snapshot` (via `bf.py snapshot <home> --run <id>`) then `closed` with the
-  time after the last. A run that stops early writes `paused — <why, and what it waits for>`.
-- Lines are appended in one batch per phase boundary, plus a `note wave n dispatched` heartbeat before each
-  wave of agents — it keeps the lock from looking abandoned during long phases.
+## 4. Lock and resume
 
-## 4. The lock
+`bf.py lock` is a read-only log inspection, not an atomic lock or proof of process liveness.
+Exit codes remain: 0 no other recorded open run, 3 recent recorded open run, 1 older or age-unknown
+open run whose ownership needs checking. Keep one writer per home; inspect immediately before opening
+an entry and preserve concurrent edits under rules §3. Verify a prior writer stopped before
+closing it; age alone is not proof. Never overwrite an active writer. Record a confirmed stopped run by
+appending `- note closed as abandoned: <old id>` in the new entry. An explicit owner's statement that
+the session stopped is sufficient. Otherwise report/ask only when ownership cannot be established.
 
-`bf.py lock <home>`: exit **0** — no open run (or no home yet); **1** — an open entry that is abandoned (not
-the newest entry, or no log write for 30 minutes): after opening this run's own entry, add the line
-`- note closed as abandoned: <its run id>` to it — the log stays append-only and `bf.py` treats that run as
-closed — say so, proceed; **3** — another run is writing: halt with one plain line, unless the owner says that
-session stopped. **Commands embedded in `auto` (or `ready` calling the questions tail) do not take the lock,
-open entries or close them** — they run inside the outer run's entry.
+A paused interview/draft-review/owner-decision run resumes from its artifacts in a new entry naming
+the prior run. Material supplied on resume is captured and applied before expensive review. Embedded
+commands never take another lock, close the outer entry or treat the outer writer as somebody else.
 
-**A paused `init`** (waiting on the interview or on `init soft`'s review — it takes a snapshot before pausing,
-so the owner's edits to the draft are seen) is not abandoned: the next
-invocation in that home that answers it **resumes** the `init` — a reply to the interview continues at I2,
-a reply to the draft review continues at I4 — in a new entry that names the paused one.
+## 5. Chat decisions and vetoes
 
-## 5. What the owner says in chat
+- `q-3: 2` or an explicit behavioral answer: save the owner's exact words and selected option text,
+  set Answered, then apply when authorized by the command/sequence. Empty or ambiguous answers remain
+  visible; Flagged needs a reason. Do not overwrite an owner's populated answer with an AI answer.
+- Explicit new owner material that settles a question can close it with the source and update the spec
+  in one coherent add. Explicit supersession quotes the replaced line; unexplained conflict asks.
+- `reject q-N`/`close q-N`: record the reason and status. A settled/no-longer-needed question can remove
+  its marker; ask-it-better restores a narrower gap. Do not silently close merely because a model prefers it.
+- `D3: <choice>`: record that owner replacement; `drop D3`/`undo F2`/`drop S1`: preserve IDs, restore the
+  gap, record the veto (`bf.py ids --veto D3`) and its consequences. Do not re-adopt the same default.
+- Overruling an applied answer reopens it and dependent rows; resolve updates all provenance-linked lines.
+- `accept`/`looks good` explicitly clears a genuine pending-owner-review clause after reading what was
+  accepted. Ordinary defaults need no new acceptance gate. Legacy delegated serious choices do not become
+  owner-approved merely because the current skill no longer asks for ordinary approval.
 
-At the start of any command, save the owner's message to `work/<run-id>/invocation.md`, then read it for:
+`status` records nothing: name supplied decisions as not recorded. Unsupported/unclear chat edits are
+reported rather than guessed. Defaults/AI answers are labelled as such, never quoted as the owner's.
 
-| They say | Recorded as |
-|---|---|
-| *"q-3: 2"*, *"q-5 — no, keep it per person"* | That row's `Answer & why` = their words verbatim (string-matched against the saved message), plus the named direction's text: `2 — "<direction text>" (owner, in chat, <date>)`. Status → `Answered` |
-| *"reject q-6, not needed"* | `Rejected`, their reason verbatim. *Not needed* / *already decided* removes the marker (route 2); *ask it better* turns it back to `→ asked next run` |
-| *"close q-2"* | `Closed`, `- **Closed:** <date> — owner, in chat` |
-| *"D3: <their call>"* | A replacement decision for that default: recorded as the owner's answer to a new row for its gap (Status `Answered`), applied by the next `resolve` |
-| *"drop D3"*, *"undo F2"*, *"drop S1"* | The default/slot is removed, or the fix reverted to its quoted old text; the gap becomes a marker `→ asked next run (vetoed D3)`; `bf.py ids --veto D3`; the ledger line gains `· vetoed <date> — "<their words>"`; one `vetoed` line |
-| *"q-4 is wrong — …"* about an applied answer | A new answer on that row: Status → `Answered`; `resolve` rewrites the lines it wrote ([rules.md](rules.md) §1) |
-| *"accept"* / *"looks good"* after a `ready` that is pending review | Recorded by any write command (and only after reading it back from the saved message): the status line's pending-review clause is removed — **the one write to `FEATURE.md` that does not reset the status to Draft** — with one `ready` line naming what was accepted |
+## 6. A proportional run report
 
-Words that are not clearly one of these are not recorded; the reply says which ones it did not apply.
-`status` records nothing: answers given with it are named in its reply as *not recorded — say them with any
-other command*.
+In record/runs/<id>.md record the input/product state, risk rationale, meaningful changes, questions,
+visible defaults, material findings and evidence-based resolution, actual coverage, and residuals. Keep per-run pending/pass annotations here and in the log, not in governing baseline
+facts or default decision text that would need rewriting after the return.
+One compact Checks table identifies role/scope, actual model/route, brief/return paths, verdict and input
+hash evidence per grill §4. Include reused coverage and why it remains valid. No per-finding certificates,
+mandatory empty sections, copied ledgers or full discard surveys. Keep significant disagreements,
+unverified work, owner edits and source drift visible. Author inspection is not independent review.
 
-## 6. The run report — `record/runs/<run-id>.md`
+Finish a write run with fresh counts/lint, ID sync, `bf.py snapshot <home> --run <id>`, snapshot and
+closed lines. If genuinely paused, state why and what coverage remains. Do not perform another write
+after an instruction to stop all edits. A metadata-only status stamp/explicit acceptance does not require
+another substantive review when governing inputs remain unchanged.
 
-Written at the end of every write run (an embedded run writes into its caller's report). Sections, each
-present (`None.` when empty): **Summary** · **Funnel** (by lens and pass) · **Questions written** (impact
-order) · **Defaults, fixes, slots** (copied from the ledger lines this run added) · **Product facts added** ·
-**Discards** (filter, evidence, counter-case, grouped by filter; depth-capped ones marked) · **Already settled
-— recommend closing** · **Checks** (each agent: role, model, verdict counts, every non-clean verdict with its
-evidence, cold-read rewordings old → new) · **Unverified** (each item and the total) · **The owner's edits seen**
-(`bf.py changed`) · **Drift and reports for others** (wiki or doc corrections, test/code disagreements,
-unreleased facts) · **Directives**.
+## 7. Reply
 
-## 7. The reply — what the owner reads in chat
-
-Short, plain, no phase codes or run ids. In this order, skipping empty parts:
-
-1. **First line:** what happened, and the unverified total if any (*"Feature drafted: 9 requirements, 3
-   changes to what users have today, 7 questions for you."*).
-2. **Questions for you** — up to 10, impact order: `q-NN — the question` and `(recommended: n)` where one
-   survived the cold read. Then: *"Answer here (e.g. "q-2: 1, q-5: no …"), in questions.md, or say `answer`
-   and I'll answer what I safely can."*
-3. **Decided for you** — the calls the run made, one line each, the ones users will notice most first
-   (`simplest fit` and changes to a surface before conventions); all `keeps today's behaviour` defaults on
-   **one** line (*"…and kept today's behaviour for D4, D6, D7"*). Then *"say "drop D3" or "D3: <your call>" to
-   change one."* A reply with many of these and few questions is the intended shape.
-4. **Worth knowing** — rows already settled (*"close q-2"*), wiki drift, a test that disagrees with the code,
-   unreleased behaviour a `CH` relies on, a contradiction in the sources, directives ignored.
-5. **Next step** — one line. Where the home was created, its path.
+Lead with outcome and any missing review/blocker. Link FEATURE.md; list serious owner questions and
+the visible ordinary defaults for veto; report actual checks and residuals. Group routine preserved
+defaults. State planning readiness precisely, not build/release readiness. Recommend one next useful
+action instead of demanding a chain of intermediate commands. For planning handoff, link the existing
+FEATURE.md and relevant baseline/source evidence, highlighting accepted decisions, exclusions, required
+preservation and unresolved constraints. Do not duplicate the definition into a new mandatory plan or
+imply that planning readiness verifies implementation. No phase codes or internal routing jargon.

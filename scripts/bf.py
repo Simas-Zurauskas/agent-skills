@@ -17,8 +17,8 @@ Subcommands:
   changed <home>                    diff the current files against the newest snapshot (edits made between runs)
   selftest                          run the script's own checks on a throwaway fixture
 
-Exit codes: 0 ok · 1 findings (lint errors, quote not found, stale anchors, changes, abandoned run)
-            · 2 usage error · 3 another run is writing (open entry, last write under 30 minutes ago).
+Exit codes: 0 ok · 1 findings (lint errors, quote not found, stale anchors, changes, ownership unconfirmed)
+            · 2 usage error · 3 recent recorded open run (not proof of writer liveness).
 """
 import argparse
 import datetime as dt
@@ -142,9 +142,10 @@ def parse_questions(text):
             continue
         if cur is None:
             continue
-        if line.startswith("**Answer & why:**"):
+        answer = re.match(r"^(?:- )?\*\*Answer & why:\*\*(.*)$", line)
+        if answer:
             in_answer, last_field = True, None
-            cur["answer"] = line[len("**Answer & why:**"):].strip()
+            cur["answer"] = answer.group(1).strip()
             continue
         f = FIELD.match(line)
         if f and (not in_answer or f.group(1).strip() in LATE_FIELDS):
@@ -161,6 +162,18 @@ def parse_questions(text):
         r["status"] = r["fields"].get("Status", "").strip()
         r["delegated"] = a.startswith("Delegated answer")
     return rows, malformed
+
+
+def touched_ids(text):
+    """Expand the same requirement references accepted by lint, including same-kind ranges."""
+    keys = []
+    for token in re.findall(r"\b(?:FR|CH|KEEP)-\d+(?:\s*[–-]\s*(?:FR|CH|KEEP)-\d+)?", text):
+        ends = re.findall(r"(FR|CH|KEEP)-(\d+)", token)
+        if len(ends) == 2 and ends[0][0] == ends[1][0] and int(ends[0][1]) <= int(ends[1][1]):
+            keys.extend(f"{ends[0][0]}-{n}" for n in range(int(ends[0][1]), int(ends[1][1]) + 1))
+        else:
+            keys.extend(f"{prefix}-{n}" for prefix, n in ends)
+    return keys
 
 
 def feature_ids(text):
@@ -430,15 +443,11 @@ def lint(home):
             W("questions.md", r["line"], f"{r['id']} has an answer but is still Open — the owner may mean Answered")
         if r["status"] == "Flagged" and not f.get("Why flagged"):
             E("questions.md", r["line"], f"{r['id']} is Flagged with no 'Why flagged'")
-        for t in re.findall(r"\b(?:FR|CH|KEEP)-\d+(?:\s*[–-]\s*(?:FR|CH|KEEP)-\d+)?", f.get("Touches", "")):
-            ends = re.findall(r"(FR|CH|KEEP)-(\d+)", t)
-            keys = [f"{ends[0][0]}-{n}" for n in range(int(ends[0][1]), int(ends[-1][1]) + 1)] if len(ends) == 2 \
-                and ends[0][0] == ends[1][0] else [f"{p}-{n}" for p, n in ends]
-            for k in keys:
-                if k not in defs:
-                    E("questions.md", r["line"], f"{r['id']} touches {k}, which is not in FEATURE.md")
-                elif k in withdrawn and r["status"] in ("Open", "Answered"):
-                    W("questions.md", r["line"], f"{r['id']} touches {k}, which is withdrawn")
+        for k in touched_ids(f.get("Touches", "")):
+            if k not in defs:
+                E("questions.md", r["line"], f"{r['id']} touches {k}, which is not in FEATURE.md")
+            elif k in withdrawn and r["status"] in ("Open", "Answered"):
+                W("questions.md", r["line"], f"{r['id']} touches {k}, which is withdrawn")
         title = r["title"]
         if title.count("?") != 1:
             W("questions.md", r["line"], f"{r['id']} title should be one question with one '?'")
@@ -701,7 +710,8 @@ def row_hash(home, qid):
         return None
     row = m.group(0)
     ft = read(os.path.join(home, "FEATURE.md"))
-    touched = re.findall(r"\b(?:FR|CH|KEEP)-\d+\b", (re.search(r"^- \*\*Touches:\*\*(.*)$", row, re.M) or [None, ""])[1])
+    parsed, _ = parse_questions(row)
+    touched = touched_ids(parsed[0]["fields"].get("Touches", "")) if parsed else []
     lines = [l for _, l in logical_lines(ft) if any(re.match(BULLET + r"\**" + re.escape(t) + r"\**\s", l) for t in touched)]
     return sha_bytes((norm(row) + "\n" + "\n".join(norm(l) for l in lines)).encode("utf-8"))[:12]
 
@@ -808,7 +818,10 @@ def changed(home):
     diffs = []
     for n in ("FEATURE.md", "questions.md", "baseline.md"):
         a, b = os.path.join(sd, last, n), os.path.join(home, n)
-        if os.path.exists(a) and os.path.exists(b):
+        a_exists, b_exists = os.path.exists(a), os.path.exists(b)
+        if a_exists != b_exists:
+            diffs.append(f"{n}: {'deleted' if a_exists else 'added'} since snapshot {last}")
+        elif a_exists and b_exists:
             dl = list(difflib.unified_diff(read(a).splitlines(), read(b).splitlines(), f"{n} @ {last}", f"{n} now",
                                            lineterm="", n=1))
             if dl:
@@ -917,6 +930,24 @@ def selftest():
         assert lk["run"] == "ccc333" and lk["minutes_since_last_write"] < 30, lk
         lk = lock(home, self_id="ccc333")
         assert lk["run"] == "aaa111" and lk["minutes_since_last_write"] == float("inf"), lk
+        # CLI advice must not turn log age into authority to close another writer.
+        import contextlib
+        import io
+        log_path = os.path.join(home, "record", "log.md")
+        original_log = read(log_path)
+        original_mtime = os.path.getmtime(log_path)
+        for age, own_id, expected in ((0, None, 3), (3600, None, 1), (0, "ccc333", 1)):
+            os.utime(log_path, (original_mtime - age, original_mtime - age))
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                result = main(["lock", home] + (["--self", own_id] if own_id else []))
+            assert result == expected, (result, output.getvalue())
+            assert "abandoned run:" not in output.getvalue(), output.getvalue()
+            assert "do not proceed over an active writer" in output.getvalue(), output.getvalue()
+            if expected == 1:
+                assert "Age alone is not proof" in output.getvalue(), output.getvalue()
+            assert read(log_path) == original_log, "lock command modified the record"
+        os.utime(log_path, (original_mtime, original_mtime))
         # provenance quotes are not live content
         ft = read(os.path.join(home, "FEATURE.md"))
         ft = ft.replace("## Edge cases\n", "## Edge cases\n\n- Pins sync at once.\n  *(From q-01, 2026-10-27 — replaces: \"[NEEDS CLARIFICATION: FR-2 — which mark? → q-01] and Default D9 (standard practice — adopted 2026-10-20): old\".)*\n")
@@ -941,6 +972,40 @@ def selftest():
         ft = ft.replace("## Why\n", "## Why\n\nNot covered yet.\n")
         write_atomic(os.path.join(home, "FEATURE.md"), ft)
         assert any("not covered yet" in e for e in lint(home)[0])
+        # Previously documented bullet-form answers remain readable without migration.
+        for marker in ("**Answer & why:**", "- **Answer & why:**"):
+            rows, malformed = parse_questions("### q-01 · Which order?\n- **Status:** Answered\n" +
+                marker + " Delegated answer: newest first.\n- **Applied:** pending\n")
+            assert not malformed and rows[0]["answered"] and rows[0]["delegated"], rows
+            assert rows[0]["answer"] == "Delegated answer: newest first.", rows
+        regression = os.path.join(ws, "range-and-deletion")
+        scaffold(regression, "Range and deletion")
+        feature_path = os.path.join(regression, "FEATURE.md")
+        question_path = os.path.join(regression, "questions.md")
+        body = "- FR-1 — First.\n- FR-2 — Middle.\n- FR-3 — Last.\n- KEEP-1 — Preserve.\n- FR-4 — Unrelated.\n"
+        write_atomic(feature_path, body)
+        write_atomic(question_path, "### q-01 · Which order?\n- **Touches:** FR-1–FR-3,\n  KEEP-1\n")
+        initial = row_hash(regression, "q-01")
+        original_question = read(question_path)
+        write_atomic(question_path, original_question.replace("FR-1–FR-3", "FR-3–FR-1"))
+        reversed_hash = row_hash(regression, "q-01")
+        write_atomic(feature_path, body.replace("First.", "Changed endpoint."))
+        assert row_hash(regression, "q-01") != reversed_hash, "descending range lost endpoint dependency"
+        write_atomic(question_path, original_question)
+        write_atomic(feature_path, body.replace("Middle.", "Changed middle."))
+        assert row_hash(regression, "q-01") != initial, "range middle missing from row hash"
+        write_atomic(feature_path, body.replace("Preserve.", "Changed preservation."))
+        assert row_hash(regression, "q-01") != initial, "wrapped Touches missing from row hash"
+        write_atomic(feature_path, body.replace("Unrelated.", "Changed unrelated."))
+        assert row_hash(regression, "q-01") == initial, "unrelated requirement invalidates row hash"
+        snapshot(regression, "eee555")
+        original = read(question_path)
+        os.remove(question_path)
+        assert changed(regression)[1], "deleted governing file reported unchanged"
+        write_atomic(question_path, original)
+        assert not changed(regression)[1], "restored exact file reported changed"
+        os.remove(os.path.join(regression, "record", "snapshots", "eee555", "questions.md"))
+        assert changed(regression)[1], "added governing file reported unchanged"
         print("selftest: ok")
         return 0
     finally:
@@ -998,9 +1063,9 @@ def main(argv=None):
             print("no open run" if os.path.isdir(home) else "no feature home yet")
             return 0
         if l["minutes_since_last_write"] == float("inf") or l["minutes_since_last_write"] >= 30:
-            print(f"abandoned run: {l['open']} — close it with a note line and a paused line, then proceed")
+            print(f"ownership unconfirmed: {l['open']} — older or age-unknown open run; confirm the writer stopped before closing it. Age alone is not proof; do not proceed over an active writer.")
             return 1
-        print(f"open run: {l['open']} · last log write {l['minutes_since_last_write']} min ago — another run is writing")
+        print(f"recorded open run: {l['open']} · last log write {l['minutes_since_last_write']} min ago — check writer ownership; do not proceed over an active writer")
         return 3
     if not os.path.isdir(home):
         print(f"no feature home at {home}", file=sys.stderr)

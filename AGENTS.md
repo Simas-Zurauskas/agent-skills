@@ -1,39 +1,34 @@
 # Maintaining blueprint-feature — read before editing
 
-`SKILL.md` is what a consuming agent loads; this file is for whoever edits the skill. There is no
-`CLAUDE.md` here on purpose (it would load into consumer sessions).
+`SKILL.md` is consumed by agents. This file is maintainer guidance, not another workflow. Preserve the
+shared source directory and Claude/Codex installation symlinks. No CLAUDE.md is added to this skill.
 
-## The gate — every edit
+## Gate for changes
 
-1. `python3 scripts/bf.py selftest` prints `selftest: ok`.
-2. Every file a command cites exists, and every `§n` it cites exists in that file:
-   `grep -rnoE '\(\.\./[a-z/-]+\.md\)|\([a-z-]+\.md\)' SKILL.md commands reference briefs | …` — or read
-   them; a dangling citation is a rule with no home.
-3. A rule lives in **one** file. Commands point at `reference/`; briefs restate only what an agent with
-   no other context must know (they cannot follow links back into the skill). When you change a rule
-   that a brief restates (the never-list, the grounds, the verdicts), change the brief in the same edit.
-4. Bump `VERSION` when behaviour changes, and add the why to `HISTORY.md`, not inline.
-5. The skill must stay runnable on **Claude Code and Codex**: no tool name is required that only one
-   harness has, without the other's equivalent in `reference/dispatch.md`.
+1. `python3 scripts/bf.py selftest` must print `selftest: ok`.
+2. Every linked file and cited numbered section exists. Check command/reference/brief links together.
+3. A rule has one home. Commands link to it; a brief restates only what a fresh agent needs. Change any
+   necessary brief restatement with the rule. Do not restore retired routing/cold-reader/checker stages
+   through a stale prompt or README.
+4. Bump VERSION for behavior changes; explain evidence and limits in HISTORY.md.
+5. Keep Claude Code and Codex routes in reference/dispatch.md. Do not require unavailable model aliases,
+   assume a history fork is blind or claim a same-model check was different-model verification.
+6. Preserve existing homes, schemas, IDs, snapshots and owner decisions. Mechanical helpers do not prove
+   substantive coverage. For workflow changes, use focused independent forward-testing in an isolated
+   workspace when authorized; test actual behavior, including scope control and readiness reuse.
 
-## Where things live
+## Single homes
 
-| Topic | Single home |
+| Topic | File |
 |---|---|
-| Rules that outrank everything | `reference/rules.md` |
-| `FEATURE.md` blocks, IDs, markers, defaults, slots | `reference/feature-shape.md` |
-| Learning the product, fact format, drift | `reference/baseline.md` |
-| Lenses, sweeps, scales, bounds | `reference/grill.md` |
-| Filters, gate, router, question format, cold read | `reference/dispositions.md` |
-| Folder, log, lock, chat answers, report, reply | `reference/record.md` |
-| Agents on Claude Code and Codex, probe ladder, models | `reference/dispatch.md` |
-| Agent prompts | `briefs/*.md` (templates — `{{SLOTS}}` filled by the orchestrator) |
-| Mechanical checks | `scripts/bf.py` |
+| Authority, provenance, serious decisions, scope test, protections | reference/rules.md |
+| Output blocks, IDs, defaults/slots/markers and compatibility | reference/feature-shape.md |
+| Current behavior, blast radius, deployment evidence and drift | reference/baseline.md |
+| Risk tiers, review timing/coverage, correction bound and reuse | reference/grill.md |
+| Finding settlement and question format | reference/dispositions.md |
+| Home, compact log/report, chat answers, lock and legacy compatibility | reference/record.md |
+| Actual fresh-context dispatch on both harnesses | reference/dispatch.md |
+| Read-only substantive review / optional mapping | briefs/review.md, briefs/cartographer.md |
+| Deterministic existing-home checks | scripts/bf.py |
 
-## Lineage
-
-Derived from the `blueprint` skill (v62, `~/dev/ai/SKILLS/blueprint`), which defines a whole product
-before development. This skill keeps its safety model (sourced / labelled default / admitted gap; the
-owner's sign-off per answer; independent dispatches; quote checks; never-defaultable list; blind
-re-routing; cold reads; delegated answers) and drops what a single post-PRD feature does not need
-(Notion, client packets, charter, sittings machinery, the shape-change register). Read `HISTORY.md`.
+Read HISTORY.md for lineage and prior evidence. The whole-product blueprint skill remains separate.
