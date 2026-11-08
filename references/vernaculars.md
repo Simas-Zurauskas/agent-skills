@@ -1,5 +1,7 @@
 # Vernacular and direction library
 
+> Current interpretation: [design diagnostics](design-diagnostics.md) and [execution contract](execution-contract.md) govern. Historical product-specific bans, caps, screen formulas and timings below are examples, not universal requirements. Use only the sections relevant to this product and target.
+
 Read this when you research and propose directions: after the design guidelines exist, before any builder is briefed. It holds (a) the method for finding real-world visual worlds ("vernaculars") that ground original directions, (b) a catalogue of 16 researched vernaculars you can reuse or re-score, and (c) all 18 direction candidates from the first real run as reusable patterns, with what the critic praised and flagged in the ten that were built.
 
 Source run: Repperoni (a private scoreboard for friend crews' group challenges), Round 1, 2026-09-25. Repperoni specifics appear only as labelled examples. In examples, "the personal number" was Sam's total (1,690), "the goal number" was the crew's 10,000, and the three screens were Home, the challenge room and the Finish line (the celebration).
@@ -228,7 +230,7 @@ any face not listed there. What only this survey found:
 
 ### 6.15 Takeaway window and lightbox menu · Fit 3 · Distinct 2 · Suits: food, delivery, hospitality
 - **Look:** cardboard "accepts a reduced rainbow of inks: primarily red, green, and black"; the mustachioed-chef cliché; the "design bureau" box loses "a certain folksy *je ne sais quoi*" [SC1][SC2]. Real pizzeria identities pair a workhorse grotesk with one odd display face [FIU].
-- **Fonts:** Fraunces (display words only; no `tnum`) [FR], but it is on the generator-default ban list ([guidelines-template.md](guidelines-template.md) template §4.1), so use it only under a written license, or pick a less-used soft serif and verify it; Familjen Grotesk (`tnum`, equal digits), Yellowtail as a script garnish.
+- **Fonts:** Fraunces (display words only; no `tnum`) [FR], evaluate its product fit and rendered glyphs like any other face; there is no font-name ban list; Familjen Grotesk (`tnum`, equal digits), Yellowtail as a script garnish.
 - **Palette:** lightbox black #111111 · menu yellow #FFD100 (12.9:1) · sauce red #E10600 (white on it 5.0:1) · white #FFFFFF · grill orange #FF7A00 (black on it 7.2:1).
 - **Trap:** a caricatured chef, flag stripes, Lobster or Pacifico, grease stains.
 

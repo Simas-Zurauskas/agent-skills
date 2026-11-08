@@ -2,6 +2,15 @@
 
 `VERSION` holds one integer. Add an entry per change: what changed, and why (the run or feedback that taught it).
 
+## 8 — 2026-11-08
+
+- Normal remains default (`speed` alias); hold optional `lite` out of the release: it reduced effort but failed the operational required-note quality gate. `thorough` retains per-direction critique.
+- Default to six distinct directions with three product-selected screens, comparable content and contextual design guidance. Preserve owner constraints, next-round survivors and undecided feedback.
+- Publish ready drafts progressively to Design Lab or standalone; support native editable Figma with capability checks. One publisher, at most three builders, explicit ready IDs, artifact fingerprints and reconciled resume.
+- Repair URL relocation, shared-preview writes, incomplete final assembly, metadata identity handling, desktop composition and browser failure/cleanup. Add batch capture/checks and conservative reuse of unchanged evidence.
+- Replace compulsory style prescriptions and long entry instructions with focused role/target references. Keep feedback/extraction compatibility and existing browser-selection and lessons edits.
+- Validation: two matched six-direction normal/lite cases with actual rendered output and fresh anonymous evaluation; targeted repairs and raw failures retained. Thirty-one focused helper/workflow regressions and a real six-board editable Figma pilot. Detailed evidence is preserved in the sibling mood-board-lab/v8-20261108T093057Z folder; post-trial mechanical corrections are distinguished from the frozen creative trial revision.
+
 ## 7 — 2026-10-06
 
 From Dream Catcher Rounds 2–7 (six rounds in one day): R2's "friendly, modern" round of contemporary UI styles was

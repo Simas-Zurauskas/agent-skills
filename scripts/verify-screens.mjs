@@ -2,29 +2,22 @@
 // screenshot can hide: icons that never rendered (Lucide <i data-lucide> left in the page = a wrong name), images
 // that failed, horizontal overflow, fonts that didn't load, console errors. Works for http:// (a dev server) and
 // file:// (the standalone target). Exit 1 if any screen has a problem.
-import { launch } from './cdp.mjs';
-const urls = process.argv.slice(2);
-if (!urls.length) { console.log('usage: node verify-screens.mjs URL [URL…]'); process.exit(2); }
-let bad = 0;
-const b = await launch({ width: 600, height: 1000 });
-try {
-  await b.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
-  await b.send('Log.enable');
-  let logs = [];
-  b.on((m) => {
-    if (m.method === 'Runtime.consoleAPICalled' && m.params.type === 'error') logs.push(m.params.args.map((a) => a.value ?? a.description ?? '').join(' '));
+import { launch, isMain } from './cdp.mjs';
+export function collectErrors(b) {
+  const logs = [];
+  const stop = b.on(m => {
+    if (m.method === 'Runtime.consoleAPICalled' && m.params.type === 'error') logs.push(m.params.args.map(a => a.value ?? a.description ?? '').join(' '));
     if (m.method === 'Runtime.exceptionThrown') logs.push(m.params.exceptionDetails?.exception?.description || m.params.exceptionDetails?.text || 'exception');
-    if (m.method === 'Log.entryAdded' && m.params.entry.level === 'error') logs.push(`${m.params.entry.text}${m.params.entry.url ? ' ' + m.params.entry.url : ''}`);
+    if (m.method === 'Log.entryAdded' && m.params.entry.level === 'error') logs.push(m.params.entry.text);
   });
-  for (const url of urls) {
-    logs = [];
-    const loadError = await b.goto(url, 4000);
-    if (loadError) { bad += 1; console.log(`✗ ${url}\n   - did not load: ${loadError}`); continue; }
+  return { logs, stop };
+}
+export async function verifyPage(b, logs = []) {
     const f = await b.eval(`JSON.stringify({
       title: document.title,
       icons: [...document.querySelectorAll('i[data-lucide]')].map(i => i.getAttribute('data-lucide')),
       images: [...document.images].filter(i => !i.complete || !i.naturalWidth).map(i => i.getAttribute('src')),
-      overflowX: document.documentElement.scrollWidth > 391 ? document.documentElement.scrollWidth : 0,
+      overflowX: document.documentElement.scrollWidth > window.innerWidth + 1 ? document.documentElement.scrollWidth : 0,
       fonts: [...new Set([...document.fonts].filter(x => x.status === 'error').map(x => x.family))],
       // every family a Google Fonts <link> asks for must really be available (a misspelled family silently falls back)
       // a family the page links but no element on THIS screen uses is fine (one head part serves all of a variant's
@@ -34,7 +27,7 @@ try {
         .filter(f => ![...document.fonts].some(x => x.family.split('"').join('') === f && x.status === 'loaded')),
     })`);
     const r = JSON.parse(f);
-    const problems = [
+    return [
       r.icons.length && `icons not rendered: ${[...new Set(r.icons)].join(', ')}`,
       r.images.length && `broken images: ${r.images.join(', ')}`,
       r.overflowX && `horizontal overflow: ${r.overflowX}px wide`,
@@ -42,8 +35,24 @@ try {
       r.missingFamilies.length && `Google Fonts family not loaded (misspelled or wrong weights?): ${r.missingFamilies.join(', ')}`,
       logs.length && `console errors: ${[...new Set(logs)].slice(0, 5).join(' | ')}`,
     ].filter(Boolean);
-    bad += problems.length ? 1 : 0;
-    console.log(`${problems.length ? '✗' : '✓'} ${r.title || url}${problems.length ? '\n   - ' + problems.join('\n   - ') : ''}`);
+}
+if (isMain(import.meta.url)) {
+  const urls = process.argv.slice(2);
+  if (!urls.length) { console.error('usage: node verify-screens.mjs URL [URL…]'); process.exitCode = 2; }
+  else {
+    const b = await launch({ width: 600, height: 1000 });
+    try {
+      await b.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+      await b.send('Log.enable');
+      for (const url of urls) {
+        const { logs, stop } = collectErrors(b);
+        try {
+          const error = await b.goto(url, 4000);
+          const problems = error ? [error] : await verifyPage(b, logs);
+          if (problems.length) process.exitCode = 1;
+          console.log(`${problems.length ? '✗' : '✓'} ${url}${problems.length ? '\n   - ' + problems.join('\n   - ') : ''}`);
+        } finally { stop(); }
+      }
+    } finally { await b.close(); }
   }
-} finally { await b.close(); }
-process.exit(bad ? 1 : 0);
+}

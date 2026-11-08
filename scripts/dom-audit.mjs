@@ -3,12 +3,9 @@
 // 13 px, text contrast under 4.5 (3 for large), text over images (listed for an eye check). Exit 1 on overlaps or
 // low contrast. Works on http:// (a dev server) and file:// (standalone).
 // Known false positive: text drawn with mix-blend-mode or background-clip:text reads as contrast 1.00 — eye-check it.
-import { launch } from './cdp.mjs';
-const urls = process.argv.slice(2);
-if (!urls.length) { console.log('usage: node dom-audit.mjs URL [URL…]'); process.exit(2); }
-
+import { launch, isMain } from './cdp.mjs';
 // runs inside the page (serialized with toString) — keep it self-contained
-const audit = () => {
+export const audit = () => {
   const cv = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
   const rgba = (c) => { cv.clearRect(0, 0, 1, 1); cv.fillStyle = c; cv.fillRect(0, 0, 1, 1); return [...cv.getImageData(0, 0, 1, 1).data]; };
   const over = ([r, g, b, a], [R, G, B]) => { a /= 255; return [r * a + R * (1 - a), g * a + G * (1 - a), b * a + B * (1 - a)]; };
@@ -43,13 +40,23 @@ const audit = () => {
   }
   return JSON.stringify(out);
 };
-const toEnd = () => {
+export const toEnd = () => {
   const all = [...document.querySelectorAll('*')].filter((e) => /(auto|scroll)/.test(getComputedStyle(e).overflowY) && e.scrollHeight > e.clientHeight + 4);
   all.sort((a, b) => b.clientHeight - a.clientHeight);
-  if (all[0]) all[0].scrollTop = all[0].scrollHeight;
-  return !!all[0];
+  const scroller = all[0] || document.scrollingElement;
+  if (!scroller || scroller.scrollHeight <= scroller.clientHeight + 4) return false;
+  scroller.scrollTop = scroller.scrollHeight;
+  return scroller.scrollTop > 0;
 };
 
+export async function auditPage(b) {
+  const top = JSON.parse(await b.eval(`(${audit.toString()})()`));
+  const scrolled = (await b.eval(`(${toEnd.toString()})()`)) ? JSON.parse(await b.eval(`(${audit.toString()})()`)) : null;
+  return Object.fromEntries(['overlaps', 'lowContrast', 'smallTargets', 'smallText', 'checkOnImage'].map(k => [k, [...new Set([...(top[k] || []), ...((scrolled && scrolled[k]) || [])])]]));
+}
+if (isMain(import.meta.url)) {
+const urls = process.argv.slice(2);
+if (!urls.length) { console.error('usage: node dom-audit.mjs URL [URL…]'); process.exit(2); }
 let bad = 0;
 const b = await launch({ width: 600, height: 1000 });
 try {
@@ -57,10 +64,7 @@ try {
   for (const url of urls) {
     const loadError = await b.goto(url.includes('?') || url.startsWith('file:') ? url : url + '?bare', 4000);
     if (loadError) { bad += 1; console.log(`✗ ${url}\n   did not load: ${loadError}`); continue; }
-    const top =JSON.parse(await b.eval(`(${audit.toString()})()`));
-    const scrolled = (await b.eval(`(${toEnd.toString()})()`)) ? JSON.parse(await b.eval(`(${audit.toString()})()`)) : null;
-    const merge = (k) => [...new Set([...(top[k] || []), ...((scrolled && scrolled[k]) || [])])];
-    const r = Object.fromEntries(['overlaps', 'lowContrast', 'smallTargets', 'smallText', 'checkOnImage'].map((k) => [k, merge(k)]));
+    const r = await auditPage(b);
     const fail = r.overlaps.length || r.lowContrast.length;
     bad += fail ? 1 : 0;
     console.log(`${fail ? '✗' : '✓'} ${url}`);
@@ -68,3 +72,4 @@ try {
   }
 } finally { await b.close(); }
 process.exit(bad ? 1 : 0);
+}

@@ -4,16 +4,40 @@ above its screens), then one compare strip per screen (that screen across every 
 Optional "themes": {"01": ["Diena", "Vakaras", "Naktis"], …} (1–4 names per variant) adds a theme switch over each
 such variant's board and one round-wide switch above the compare strips (the lab's sheet.js drives them); without it
 the page is exactly as before.
-usage: python3 assemble-round.py round.json [--keep-previews] [--dry [--print]]
+usage: python3 assemble-round.py round.json [--draft [--ready 01,03]|--final] [--preview NN] [--keep-previews] [--dry [--print]]
+  --draft keeps every declared position visible; --final requires all files and supplied content_specs.
+  --preview NN writes only round-preview-rR-vNN.html.
   --dry writes nothing (--print sends the page to stdout); --keep-previews keeps round-preview-rR-v*.html."""
 import html, json, os, re, sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from round_support import atomic_write, content_issues, review_status, viewport_css, publication_ids
 if len(sys.argv) < 2 or sys.argv[1] in ('-h', '--help'): print(__doc__); sys.exit(2)
 if not os.path.isfile(sys.argv[1]): sys.exit(f'assemble-round.py: round.json not found: {sys.argv[1]}')
 cfg = json.load(open(sys.argv[1]))
 R = cfg['round']; EX = os.path.join(cfg['lab'], 'src/explorations'); P = f'r{R}-v'
-present = [v for v in cfg['variants'] if all(os.path.exists(f'{EX}/screen-{P}{v}-{n}.html') for n, *_ in cfg['screens'])
-           and all(os.path.exists(f'{EX}/parts/{P}{v}-{p}.html') for p in ('board', 'head'))]
-missing = [v for v in cfg['variants'] if v not in present]
+viewport_style = viewport_css(cfg, 'lab')
+preview = sys.argv[sys.argv.index('--preview') + 1] if '--preview' in sys.argv else None
+if '--draft' in sys.argv and '--final' in sys.argv: sys.exit('--draft and --final are mutually exclusive')
+if preview and preview not in cfg['variants']: sys.exit(f'unknown preview variant: {preview}')
+want = [preview] if preview else list(cfg['variants'])
+present = [v for v in want if all(os.path.isfile(f'{EX}/screen-{P}{v}-{n}.html') for n, *_ in cfg['screens'])
+           and all(os.path.isfile(f'{EX}/parts/{P}{v}-{p}.html') for p in ('board', 'head'))
+           and os.path.isfile(f'{EX}/{P}{v}.css')]
+ready = publication_ids(cfg, sys.argv)
+if ready is not None:
+    if ready - set(present): sys.exit('Ready publication refused: incomplete file sets for ' + ', '.join(sorted(ready - set(present))))
+    present = [v for v in present if v in ready]
+missing = [v for v in want if v not in present]
+if '--final' in sys.argv:
+    if preview: sys.exit('--final cannot be combined with --preview')
+    issues = [f'V{v}: incomplete file set' for v in missing]
+    for v in present:
+        issues += [f'V{v}: {issue}' for issue in content_issues(cfg, sys.argv[1], lambda n: f'{EX}/screen-{P}{v}-{n}.html', required=True)]
+    if cfg.get('cover') and not (Path(cfg['lab']) / 'src' / cfg['cover']).is_file():
+        issues.append('declared cover file missing')
+    if issues: sys.exit('Final assembly refused:\n' + '\n'.join(issues))
+if preview and missing: sys.exit(f'Preview V{preview}: incomplete file set')
 themes = cfg.get('themes') or {}
 if not isinstance(themes, dict): sys.exit('assemble-round.py: "themes" must be {"01": ["Theme 1", …], …}')
 for v, names in themes.items():
@@ -34,9 +58,9 @@ def figure(v, n):
     if not m: sys.exit(f'{EX}/{f}: no <title> (the caption comes from it; expected "R{R} V{v} · <Screen>")')
     t = m.group(1).strip()
     short = re.sub(r'^[^·]*·\s*', '', t)  # the frame title is the <title> after its first "·" (yarn links checks)
-    return (f'<figure class="lab-screen"><figcaption><a href="{f}">{t}</a><button data-reset class="lab-btn" '
+    return (f'<figure class="lab-screen"><figcaption><a href="{f}">{html.escape(t)}</a><button data-reset class="lab-btn" '
             f'title="Reset this screen">↺</button></figcaption><div class="phone-frame"><iframe src="{f}" '
-            f'title="{short}" class="phone-screen" loading="lazy"></iframe></div></figure>')
+            f'title="{html.escape(short, quote=True)}" class="phone-screen" loading="lazy"></iframe></div></figure>')
 
 # The lab sheet's zoom steps are tuned for rows of three devices (1286 px). Any other screen count gets its own steps
 # here: a row is N × 402 + (N − 1) × 40 px, and each step is the largest zoom that still fits (sheet width − 80 padding).
@@ -52,6 +76,7 @@ if N != 3:
            + '\n'.join(steps) + '\n  </style>\n')
 heads = '\n'.join(f'  <include src="explorations/parts/{P}{v}-head.html"></include>' for v in present)
 sections = [f'''          <section class="lab-sheet-section" id="{P}{v}">
+            <p>V{v} · {review_status(cfg, v).title()}</p>
 {switch(themes[v], "data-lab-themes", "Tema", " " * 12) if v in themes else ""}            <div class="lab-sheet-fit">
               <include src="explorations/parts/{P}{v}-board.html"></include>
               <div class="lab-row">
@@ -59,6 +84,9 @@ sections = [f'''          <section class="lab-sheet-section" id="{P}{v}">
               </div>
             </div>
           </section>''' for v in present]
+if '--draft' in sys.argv and not preview:
+    built = dict(zip(present, sections))
+    sections = [built[v] if v in built else f'<section class="lab-sheet-section" id="{P}{v}" data-status="pending"><h2>V{v} · {html.escape(str(cfg["variants"][v]))}</h2><p>Pending</p></section>' for v in want]
 compare = [f'''          <section class="lab-sheet-section" id="{cid}">
             <h2 class="lab-sheet-title">Compare · {label}</h2>
             <p>The same screen in all {len(present)} variants, at about half size. Click a name to open it full size.</p>
@@ -83,7 +111,7 @@ page = f'''<!doctype html>
   <link rel="stylesheet" href="../styles.css">
   <!-- each variant's fonts + stylesheet: its board is styled by them -->
 {heads}
-{fit}</head>
+{fit}{viewport_style}</head>
 <body data-section="explorations" class="lab-page">
   <div class="lab-shell">
     <include src="_lab/shell/sidebar.html"></include>
@@ -112,10 +140,15 @@ page = f'''<!doctype html>
 </body>
 </html>
 '''
-out = f'{EX}/round-{R:02d}.html'
-if '--dry' in sys.argv: out = '/dev/stdout' if '--print' in sys.argv else os.devnull
-open(out, 'w').write(page)
-if '--keep-previews' not in sys.argv and '--dry' not in sys.argv:
+if preview:
+    # The variant preview is self-contained within the existing lab shell.
+    page = page.replace(chr(10).join(compare), '')
+out = f'{EX}/round-preview-{P}{preview}.html' if preview else f'{EX}/round-{R:02d}.html'
+if '--dry' in sys.argv:
+    if '--print' in sys.argv: print(page)
+else:
+    atomic_write(out, page)
+if not preview and '--draft' not in sys.argv and '--keep-previews' not in sys.argv and '--dry' not in sys.argv:
     for f in os.listdir(EX):
-        if f.startswith(f'round-preview-{P}'): os.remove(f'{EX}/{f}')
+        if f in {f'round-preview-{P}{v}.html' for v in cfg['variants']}: os.remove(f'{EX}/{f}')
 print(f'round-{R:02d}.html: {len(present)} variants ({" ".join(present)}); missing: {" ".join(missing) or "none"}', file=sys.stderr)

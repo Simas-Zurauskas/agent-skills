@@ -1,5 +1,7 @@
 # Images: photos, avatars, grades, mascots
 
+> Current interpretation: [design diagnostics](design-diagnostics.md) and [execution contract](execution-contract.md) govern. Historical product-specific bans, caps, screen formulas and timings below are examples, not universal requirements. Use only the sections relevant to this product and target.
+
 Read this before you write the brief's photo-library section, and again before you generate anything: when a round
 needs images, the shared library, prompts, the checks, compression, per-variant CSS grades, and mascots.
 

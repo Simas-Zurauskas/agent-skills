@@ -1,7 +1,7 @@
 # The Design Lab target (optional): sheets, rounds and the variant file contract
 
-Use this target only when the workspace has a Design Lab and the user wants the round there. Otherwise use
-[standalone.md](standalone.md). The design process is identical; only paths, the page shell and the checks differ.
+Use this target when explicitly selected (`design-lab`, with `lab` alias), or when the product workspace has one unambiguous existing Design Lab and no explicit destination overrides it. Otherwise use
+[standalone.md](standalone.md). The shared execution contract governs all targets; this file defines the HTML mechanics.
 
 The skill shows a round in a **Design Lab**: an HTML + Tailwind v4 workbench built with Parcel and posthtml
 `<include>`, with its system in `src/_lab/` and its designs in `src/<section>/`. The template lives at
@@ -133,10 +133,10 @@ screen:
 
 | File | Rules |
 | --- | --- |
-| `src/explorations/parts/rR-vNN-head.html` | Exactly two lines: the Google Fonts `css2` `<link>` and `<link rel="stylesheet" href="rR-vNN.css">` (`targets/design-lab/templates/head.html`). Screens, the preview and the round page all include it, so one file owns the variant's fonts. |
+| `src/explorations/parts/rR-vNN-head.html` | The variant stylesheet `<link rel="stylesheet" href="rR-vNN.css">`, plus font links only when the approved faces need them; system fonts need no external font link (`targets/design-lab/templates/head.html`). Screens, the preview and the round page all include it, so one file owns the variant's fonts. |
 | `src/explorations/rR-vNN.css` | Every selector under `.rR-vNN`. Custom properties go on `.rR-vNN`, keyframes are named `rR-vNN-*`. No `@import` (a production build may merge stylesheets and silently drop an `@import` that is no longer first), no `@font-face`, no `:root` / `html` / bare `body`. |
-| `src/explorations/screen-rR-vNN-<n>.html` | One per screen (`targets/design-lab/templates/screen.html`). `<title>R{R} V{NN} · <Screen name></title>`, and `yarn links` checks it against the round page's caption. `<body class="rR-vNN">`, own status bar, no `<script>`. |
-| `src/explorations/parts/rR-vNN-board.html` | The style tile: ONE root `<div class="lab-board rR-vNN w-[1286px] …">`. 1286 px = three 402 px devices (390 + 2 × 6 bezel) + two 40 px gaps, so it lines up with the phones; four screens = 1728 px (the assembler then adds zoom steps for four-wide rows to the round page's head, since the lab sheet's own steps assume three). No links or buttons inside. |
+| `src/explorations/screen-rR-vNN-<n>.html` | One per screen (`targets/design-lab/templates/screen.html`). `<title>R{R} V{NN} · <Screen name></title>`, and `yarn links` checks it against the round page's caption. `<body class="rR-vNN">`, status bar only for an applicable phone platform, no `<script>`. Use the declared product canvas. |
+| `src/explorations/parts/rR-vNN-board.html` | The style tile: ONE root `<div class="lab-board rR-vNN …">`, sized to the configured screen composition. The compatibility phone default is 1286 px for three 402 px frames and two 40 px gaps (1728 px for four). Desktop screens stack below the board at their declared viewport. No links or buttons inside. |
 | `src/explorations/round-preview-rR-vNN.html` | The builder's private preview (`targets/design-lab/templates/preview.html`), deleted by `scripts/design-lab/assemble-round.py`. |
 | `src/explorations/img/*` | The shared photo library (see `references/images.md`). |
 
@@ -176,3 +176,37 @@ the screens (`<html data-vt>`) and on the board (its section's `data-vt`), and p
 screen opens in a theme with `#vt=N` in its URL (`screen-rR-vNN-1.html#vt=2`, also for `screen-shot.mjs`).
 
 `scripts/design-lab/check-round.py round.json` is the mechanical gate.
+
+## Progressive publication and strict completion
+
+The lead is the single shared publisher. Initialize the declared round early, then assemble with `--draft
+--keep-previews` after each ready variant. Every declared slot stays visible in stable order; missing slots remain
+pending and ready work is visibly draft. Optional `review_status` maps variant IDs to `reviewed` only after evidence.
+Use `--final --keep-previews` after every declared variant, stylesheet and screen exists; it rejects missing declared
+work. Explicit `--final` requires `content_specs`; point it to `strings.json` for static content completeness, and still run rendered content
+checks. Existing no-flag partial assembly remains compatible; it does not establish completion.
+
+Builders may generate private `--preview NN` pages but never shared assets or the round page. The lead initializes
+missing shared assets; existing customized assets are preserved. Keep the user's server untouched. Only the lead may
+start and later clean up an owned scratch server. Follow [run.md](../run.md) for batched captures and one bounded
+repair pass. Figma uses [its native target guide](figma.md), not this HTML contract.
+
+## Product canvas
+
+The HTML templates default to 390×844 for compatibility. For desktop or another product canvas, set
+`"viewport": {"width": 1366, "height": 900}` in `round.json` and pass the same viewport to the workflows. Owner
+platform constraints govern the screen layout and chrome. Screens wider than 600 px stack within each variant and use
+neutral frames, with paired comparisons; mobile defaults keep their existing rows. Capture desktop screens using
+`page-shot.mjs URL OUT.png 1366 900` and run checks at the actual viewport
+through the shared check exports or supplied adapter. Never treat mobile captures as desktop evidence.
+
+Font links are optional when the approved direction uses available system/installed faces. Do not add Google Fonts
+just to fill a head template; preserve the required variant stylesheet include.
+
+Desktop screen capture/checks use the same batch helper with `--width W --height H --desktop --dpr 1 --verify --audit --strings FILE`; per-job `width`/`height` can override batch dimensions. Defaults remain 390×844 mobile. Match the round config `viewport` and inspect actual top/scrolled renders.
+
+For progressive shared assembly, pass `--draft --ready 01,03 --keep-previews` with the lead's currently
+ready IDs (or `--ready ""` for the initial pending page). An active builder may already have partial files; their
+presence is not permission to publish that direction. The ready list controls visibility only; final assembly still
+checks every declared direction and does not accept `--ready`. Private `--preview NN` is independent of this list.
+Legacy draft calls without a ready list retain file-discovery behavior.

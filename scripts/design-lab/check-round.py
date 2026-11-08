@@ -2,19 +2,27 @@
 """Mechanical checks for every variant of a round (round.json): the file set, CSS scoped to .rR-vNN, no <script>,
 no @import/@font-face, prefixed keyframes, Lucide icon names that exist, <title> pattern, the flow links
 (screen 1 → 2 → 3 → 1), then `yarn links` (read-only). Exit 1 on any problem.
-usage: python3 check-round.py round.json"""
+usage: python3 check-round.py round.json [--draft|--final]
+--final rejects every missing declared variant; --draft checks complete variants, reports incomplete as pending.
+Legacy no-flag behavior skips entirely absent variants. Supplied content_specs is checked against static text."""
 import json, os, re, subprocess, sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from round_support import content_issues
 if len(sys.argv) < 2 or sys.argv[1] in ('-h', '--help'): print(__doc__); sys.exit(2)
 if not os.path.isfile(sys.argv[1]): sys.exit(f'check-round.py: round.json not found: {sys.argv[1]}')
 cfg = json.load(open(sys.argv[1])); LAB = cfg['lab']; R = cfg['round']; EX = f'{LAB}/src/explorations'; P = f'r{R}-v'
 ICONS = f'{LAB}/node_modules/lucide/dist/esm/icons'  # one <name>.mjs per icon
 screens = [n for n, *_ in cfg['screens']]
 bad_any = False
+if '--draft' in sys.argv and '--final' in sys.argv: sys.exit('--draft and --final are mutually exclusive')
 for v in cfg['variants']:
     vid = f'{P}{v}'; issues = []
     files = [f'screen-{vid}-{n}.html' for n in screens] + [f'{vid}.css', f'parts/{vid}-board.html', f'parts/{vid}-head.html']
+    if '--draft' in sys.argv and not all(os.path.isfile(f'{EX}/{f}') for f in files):
+        print(f'V{v}: pending (incomplete file set)'); continue
     if not any(os.path.exists(f'{EX}/{f}') for f in files):
-        print(f'V{v}: not built'); continue
+        print(f'V{v}: not built'); bad_any |= '--final' in sys.argv; continue
     issues += [f'missing {f}' for f in files if not os.path.exists(f'{EX}/{f}')]
     css_path = f'{EX}/{vid}.css'
     if os.path.exists(css_path):
@@ -56,6 +64,7 @@ for v in cfg['variants']:
     for a, b in flow:
         t = html.get(f'screen-{vid}-{a}.html', '')
         if t and f'href="screen-{vid}-{b}.html"' not in t: issues.append(f'screen {a} has no link to screen {b}')
+    issues += content_issues(cfg, sys.argv[1], lambda n: f'{EX}/screen-{vid}-{n}.html', required='--final' in sys.argv)
     bad_any |= bool(issues)
     print(f'V{v}: ok' if not issues else f'V{v}:\n' + '\n'.join(f'   - {i}' for i in issues))
 res = subprocess.run(['yarn', '-s', 'links'], cwd=LAB, capture_output=True, text=True)

@@ -1,5 +1,7 @@
 # Lessons from past runs (read before starting a round)
 
+> Current interpretation: [design diagnostics](design-diagnostics.md) and [execution contract](execution-contract.md) govern. Historical product-specific bans, caps, screen formulas and timings below are examples, not universal requirements. Use only the sections relevant to this product and target.
+
 Each entry is: what happened, then what to do. Newest run first. Add a section after every round.
 
 ## Dream Catcher Rounds 2–7 (2026-10-05): trend skins rejected; essence + a real quality bar won
@@ -178,3 +180,18 @@ designed; the guidelines had removed the room it needed.
   - the whole run ≈ 8.4 M subagent tokens for the build workflow alone.
 - **Image costs:** Seedream 4 scenes $0.027 each; Nano Banana 2 avatars $0.07 (overkill; use z-image/turbo or
   flux-schnell at ~$0.005).
+
+## Kas pirmas · Marketing Page R1 (2026-10-11): the skill works for websites with a desktop frame and one responsive file
+
+Ten directions for kaspirmas.lt in ket-ui-lab, bounded to the existing theme (the owner: "ugly … heavy, cluttered,
+hard to follow … made from the existing theme"). A new lab section, a desktop browser frame added to the workbench,
+every page shown at 1280 beside the phone.
+
+| What happened | Do instead |
+| --- | --- |
+| The skill's contract, assembler and capture tools assume phone apps | for a website: ONE responsive document per page, included by a thin desktop screen and a thin phone screen; an adapted assembler (rows of desktop + phone), a full-page capture tool (tiles + layout facts), and a contact-sheet tool so a critic can see ten variants in a few images |
+| A new lab section's files are build entries: created after `yarn dev` starts they are not served | scaffold every variant's files as placeholders, then restart the dev server once, before launching builders |
+| The owner fixed hue and type, so the round could not diverge on colour | say so in the brief and move the diversity matrix to layout axes (ground balance, hero composition, leading face, containment, alignment, imagery, density); name the nearest pairs |
+| The first critique: "one careful template in ten skins" — nine phone heroes on one skeleton, three variants with the same hero picture, five identical content pages | put per-variant hero composition and the content-page layout into each direction's brief, and assign hero images in the brief so no two share one |
+| Two other jobs wrote files under `src/` during the build and Parcel's watcher died (FSEvents dropped); later the assembler + prettier together corrupted the bundler cache | one writer at a time on a lab; after a crash restart the lead's server, clearing `.parcel-cache` only with the server stopped |
+| A zsh `for … set -- $s` loop did not word-split and wrote captures under empty names | run capture loops with `bash -c` |
