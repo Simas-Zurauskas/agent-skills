@@ -71,7 +71,7 @@ It links every skill into `~/.agents/skills` (Codex, Cursor, Gemini and the rest
 ## Releasing
 
 - Bump the skill's `VERSION` and its changelog in the same commit as the change.
-- `main` is what people get: claude.ai sync reads it, and unpinned installs follow it. Work on a branch
+- `master` is what people get: claude.ai sync reads it, and unpinned installs follow it. Work on a branch
   and merge when ready.
 - Tag releases per skill: `ui-craft/v4`. Older tags were imported the same way (`wiki-system/v43`).
 
