@@ -1,0 +1,63 @@
+# Optional legacy detector; preserve project gates and triage matches using current guides.
+# Semgrep rules for references/security.md (Python) — the gaps ruff's `S` family does not cover.
+#
+# Scope discipline: ruff is the primary Python mechanism (checks/ruff/eng-rulebook-base.toml) and
+# already covers pickle (S301), tarfile extractall (S202), `requests` without timeout (S113),
+# shell=True (S602), unsafe YAML loaders (S506) and the XML family (S313-S320). Duplicating those
+# here would imply two mechanisms where there is one. These rules exist because ruff 0.16.6 has no
+# equivalent — verified by running ruff over the same fixture; see the archived pre-v10 checks/README.md validation notes.
+#
+# Rule ids are `eng-rulebook.<lane>.<slug>` and each message names the rule it enforces.
+
+rules:
+  - id: eng-rulebook.security.python-zip-extract-unbounded
+    languages: [python]
+    severity: WARNING
+    message: >-
+      security.md SEC5/SEC6: Archive extraction needs bounded expansion and safe destinations. Inspect upstream size/count limits and path handling before reporting a defect.
+    pattern-either:
+      - pattern: zipfile.ZipFile(...).extractall(...)
+      - pattern: ZipFile(...).extractall(...)
+      - patterns:
+          - pattern: $Z.extractall(...)
+          - pattern-inside: |
+              $Z = zipfile.ZipFile(...)
+              ...
+      - patterns:
+          - pattern: $Z.extractall(...)
+          - pattern-inside: |
+              with zipfile.ZipFile(...) as $Z:
+                  ...
+    paths:
+      exclude:
+        - "test_*.py"
+        - "*_test.py"
+        - "tests/"
+        - "conftest.py"
+        - "benchmarks/"
+        - "examples/"
+        - "scripts/"
+  - id: eng-rulebook.security.python-path-join-caller-value
+    languages: [python]
+    severity: WARNING
+    message: >-
+      security.md SEC6: Joining an untrusted path does not establish containment. Inspect normalization, absolute paths, symlinks and the trusted root; already validated inputs can be safe.
+    patterns:
+      - pattern-either:
+          - pattern: os.path.join($BASE, $USER, ...)
+          - pattern: pathlib.Path($BASE) / $USER
+          - pattern: Path($BASE) / $USER
+      # A string literal cannot be caller-influenced, so it cannot carry the leading "/" that
+      # discards the base. Excluding it is what keeps this rule's signal usable.
+      - pattern-not: os.path.join($BASE, "...")
+      - pattern-not: pathlib.Path($BASE) / "..."
+      - pattern-not: Path($BASE) / "..."
+    paths:
+      exclude:
+        - "test_*.py"
+        - "*_test.py"
+        - "tests/"
+        - "conftest.py"
+        - "benchmarks/"
+        - "examples/"
+        - "scripts/"

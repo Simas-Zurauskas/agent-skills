@@ -1,0 +1,9 @@
+# Optional strict preset for PHPTYPE1/PHPTYPE2; existing settings preserved.
+# Include from the project config and set paths there. Align phpVersion with deployed runtimes.
+# Level 10 is this preset choice, not a universal requirement or required profile declaration.
+# Do not regenerate a baseline merely to conceal new failures.
+parameters:
+    level: 10
+    phpVersion: 80400
+    reportUnmatchedIgnoredErrors: true
+    treatPhpDocTypesAsCertain: false

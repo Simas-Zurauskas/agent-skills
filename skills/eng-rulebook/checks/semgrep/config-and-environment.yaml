@@ -1,0 +1,37 @@
+# Optional legacy detector; preserve project gates and triage matches using current guides.
+# Semgrep rules for references/config-and-environment.md
+#
+# Each rule id is `eng-rulebook.<lane>.<slug>` and each message names the rule it enforces, so a CI
+# failure is traceable to a line of the standard rather than to an unexplained lint id.
+#
+# Tested against a labelled fixture and real repositories before shipping — see
+# the archived pre-v10 checks/README.md validation notes.
+
+rules:
+  - id: eng-rulebook.config-and-environment.env-number-fail-open
+    languages: [typescript, javascript]
+    severity: WARNING
+    message: >-
+      config-and-environment.md CFG1: An absent or invalid numeric setting can become NaN and disable a consequential limit. Verify validation before affected work; an adjacent range/schema guard may already make this safe.
+    paths:
+      exclude:
+        - "*.test.ts"
+        - "*.test.tsx"
+        - "*.spec.ts"
+        - "*.spec.tsx"
+        - "test/"
+        - "tests/"
+        - "__tests__/"
+        - "__mocks__/"
+        - "benchmarks/"
+        - "bench/"
+        - "examples/"
+        - "example/"
+        - "scripts/"
+        - "fixtures/"
+        - "*.d.ts"
+    pattern-either:
+      - pattern: Number(process.env.$V)
+      - pattern: parseInt(process.env.$V)
+      - pattern: parseInt(process.env.$V, $RADIX)
+      - pattern: parseFloat(process.env.$V)

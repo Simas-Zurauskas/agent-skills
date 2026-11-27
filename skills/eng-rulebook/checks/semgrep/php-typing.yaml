@@ -1,0 +1,97 @@
+# Optional legacy detector; preserve project gates and triage matches using current guides.
+# Semgrep rules for references/php-typing.md.
+
+rules:
+  - id: eng-rulebook.php-typing.loose-compare-digest
+    languages: [php]
+    severity: ERROR
+    message: >-
+      php-typing.md PHPTYPE3: Loose comparison can misinterpret token or digest strings. Use timing-safe secret comparison where applicable and inspect the actual value contract.
+    # Both the bare and the namespace-escaped form (`\md5(...)`). Namespaced PHP code
+    # routinely writes the escaped form, and a pattern that omits it silently under-reports
+    # in exactly the codebases most likely to be namespaced.
+    pattern-either:
+      - pattern: $A == md5(...)
+      - pattern: md5(...) == $A
+      - pattern: $A != md5(...)
+      - pattern: md5(...) != $A
+      - pattern: $A <> md5(...)
+      - pattern: md5(...) <> $A
+      - pattern: $A == \md5(...)
+      - pattern: \md5(...) == $A
+      - pattern: $A != \md5(...)
+      - pattern: \md5(...) != $A
+      - pattern: $A <> \md5(...)
+      - pattern: \md5(...) <> $A
+      - pattern: $A == sha1(...)
+      - pattern: sha1(...) == $A
+      - pattern: $A != sha1(...)
+      - pattern: sha1(...) != $A
+      - pattern: $A <> sha1(...)
+      - pattern: sha1(...) <> $A
+      - pattern: $A == \sha1(...)
+      - pattern: \sha1(...) == $A
+      - pattern: $A != \sha1(...)
+      - pattern: \sha1(...) != $A
+      - pattern: $A <> \sha1(...)
+      - pattern: \sha1(...) <> $A
+      - pattern: $A == hash(...)
+      - pattern: hash(...) == $A
+      - pattern: $A != hash(...)
+      - pattern: hash(...) != $A
+      - pattern: $A <> hash(...)
+      - pattern: hash(...) <> $A
+      - pattern: $A == \hash(...)
+      - pattern: \hash(...) == $A
+      - pattern: $A != \hash(...)
+      - pattern: \hash(...) != $A
+      - pattern: $A <> \hash(...)
+      - pattern: \hash(...) <> $A
+      - pattern: $A == crypt(...)
+      - pattern: crypt(...) == $A
+      - pattern: $A != crypt(...)
+      - pattern: crypt(...) != $A
+      - pattern: $A <> crypt(...)
+      - pattern: crypt(...) <> $A
+      - pattern: $A == \crypt(...)
+      - pattern: \crypt(...) == $A
+      - pattern: $A != \crypt(...)
+      - pattern: \crypt(...) != $A
+      - pattern: $A <> \crypt(...)
+      - pattern: \crypt(...) <> $A
+      - pattern: $A == hash_hmac(...)
+      - pattern: hash_hmac(...) == $A
+      - pattern: $A != hash_hmac(...)
+      - pattern: hash_hmac(...) != $A
+      - pattern: $A <> hash_hmac(...)
+      - pattern: hash_hmac(...) <> $A
+      - pattern: $A == \hash_hmac(...)
+      - pattern: \hash_hmac(...) == $A
+      - pattern: $A != \hash_hmac(...)
+      - pattern: \hash_hmac(...) != $A
+      - pattern: $A <> \hash_hmac(...)
+      - pattern: \hash_hmac(...) <> $A
+    paths:
+      exclude:
+        - "*Test.php"
+        - "Tests/"
+        - "tests/"
+        - "spec/"
+        - "examples/"
+        - "benchmarks/"
+        - "vendor/"
+  - id: eng-rulebook.php-typing.error-suppression-operator
+    languages: [php]
+    severity: WARNING
+    message: >-
+      php-typing.md PHPTYPE3: Error suppression may hide failed work. Check explicit return/error handling and diagnostics before reporting a defect.
+    pattern: "@$EXPR"
+    paths:
+      exclude:
+        - "*Test.php"
+        - "Tests/"
+        - "tests/"
+        - "spec/"
+        - "examples/"
+        - "benchmarks/"
+        - "vendor/"

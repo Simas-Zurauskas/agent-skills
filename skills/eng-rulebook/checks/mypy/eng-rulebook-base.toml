@@ -1,0 +1,14 @@
+# Optional strict preset for PYTYPE1/PYTYPE2, not a required adoption bundle.
+# Existing settings are preserved; align python_version with supported project runtimes.
+# Scope untyped dependency exceptions rather than disabling import checking globally.
+# check_untyped_defs includes bodies that an annotated-functions-only setup misses.
+# Explicit Any restrictions may need bounded exceptions; do not manufacture wrapper layers.
+[tool.mypy]
+python_version = "3.14"
+strict = true
+warn_unreachable      = true
+disallow_any_explicit = true
+check_untyped_defs    = true
+disallow_untyped_defs = true
+warn_unused_ignores   = true
+disallow_any_unimported = true

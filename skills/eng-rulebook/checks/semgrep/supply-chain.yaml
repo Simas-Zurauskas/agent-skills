@@ -1,0 +1,23 @@
+# Optional legacy detector; preserve project gates and triage matches using current guides.
+# Semgrep rules for references/supply-chain-and-build-integrity.md
+#
+# Each rule id is `eng-rulebook.<lane>.<slug>` and each message names the rule it enforces, so a CI
+# failure is traceable to a line of the standard rather than to an unexplained lint id.
+#
+# Tested against a labelled fixture and real repositories before shipping — see
+# the archived pre-v10 checks/README.md validation notes.
+
+rules:
+  - id: eng-rulebook.supply-chain-and-build-integrity.workflow-unpinned-action
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      supply-chain-and-build-integrity.md BUILD2: Mutable third-party action refs can change code without a project diff. Inspect authority and pin consequential execution to a trusted immutable identity; local actions and trusted ownership need context.
+    paths:
+      include:
+        - ".github/workflows/*.yml"
+        - ".github/workflows/*.yaml"
+    # Line-anchored so YAML comments don't match; requires an @ref, so local (`./action`) refs
+    # are out of scope by shape. Two pinned forms pass: a 40-hex git SHA, and a
+    # `docker://…@sha256:<64-hex>` image digest — both followed by a word boundary.
+    pattern-regex: '(?m)^\s*-?\s*uses:\s*[''"]?[^@''"\s#]+@(?!([0-9a-fA-F]{40}|sha256:[0-9a-fA-F]{64})\b)\S+'

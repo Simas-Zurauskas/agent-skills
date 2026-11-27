@@ -1,0 +1,45 @@
+# Optional legacy detector; preserve project gates and triage matches using current guides.
+# Semgrep rules for references/web-client.md
+#
+# Each rule id is `eng-rulebook.<lane>.<slug>` and each message names the rule it enforces, so a CI
+# failure is traceable to a line of the standard rather than to an unexplained lint id.
+#
+# Tested against a labelled fixture and real repositories before shipping — see
+# the archived pre-v10 checks/README.md validation notes.
+
+rules:
+  - id: eng-rulebook.web-client.raw-html-sink
+    languages: [typescript, javascript]
+    severity: WARNING
+    message: >-
+      web-client.md WEB2: Raw HTML requires a trustworthy source or appropriate sanitization. Trace source, sanitizer configuration and downstream transformations before reporting XSS.
+    paths:
+      exclude:
+        - "*.test.ts"
+        - "*.test.tsx"
+        - "*.spec.ts"
+        - "*.spec.tsx"
+        - "test/"
+        - "tests/"
+        - "__tests__/"
+        - "__mocks__/"
+        - "benchmarks/"
+        - "bench/"
+        - "examples/"
+        - "example/"
+        - "scripts/"
+        - "fixtures/"
+        - "*.d.ts"
+    pattern-either:
+      - patterns:
+          - pattern: $EL.innerHTML = $HTML
+          - pattern-not: $EL.innerHTML = ""
+          - pattern-not: $EL.innerHTML = ''
+      - patterns:
+          - pattern: $EL.outerHTML = $HTML
+      - pattern: $EL.insertAdjacentHTML($POS, $HTML)
+      # Matches the prop being USED (JSX attribute `={...}` or object property `: {...}`), not the
+      # identifier appearing in strings, comparisons, or type definitions (`?:` is excluded) —
+      # validation on a JSX framework's own source showed the bare identifier fires on its
+      # renderer's string comparisons and prop typings, which write no HTML.
+      - pattern-regex: 'dangerouslySetInnerHTML(\s*=\s*\{|(?<!\?):\s*\{)'

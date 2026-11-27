@@ -1,0 +1,58 @@
+# Optional legacy detector; preserve project gates and triage matches using current guides.
+# Semgrep rules for references/type-safety.md
+#
+# Each rule id is `eng-rulebook.<lane>.<slug>` and each message names the rule it enforces, so a CI
+# failure is traceable to a line of the standard rather than to an unexplained lint id.
+#
+# Tested against real repositories before shipping — see the archived pre-v10 checks/README.md validation notes.
+
+rules:
+  - id: eng-rulebook.type-safety.as-unknown-as
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      type-safety.md TS2: Double assertions can bypass a real mismatch. Inspect the actual boundary and invariant before accepting or reporting the cast.
+    paths:
+      exclude:
+        - "*.test.ts"
+        - "*.test.tsx"
+        - "*.spec.ts"
+        - "*.spec.tsx"
+        - "test/"
+        - "tests/"
+        - "__tests__/"
+        - "__mocks__/"
+        - "benchmarks/"
+        - "bench/"
+        - "examples/"
+        - "example/"
+        - "scripts/"
+        - "fixtures/"
+        - "*.d.ts"
+    pattern-either:
+      - pattern: $X as unknown as $T
+      - pattern: $X as any as $T
+
+  - id: eng-rulebook.type-safety.empty-object-assertion
+    languages: [typescript]
+    severity: WARNING
+    message: >-
+      type-safety.md TS2: An empty-object assertion does not initialize required fields. Trace construction before use and verify the intended state contract.
+    paths:
+      exclude:
+        - "*.test.ts"
+        - "*.test.tsx"
+        - "*.spec.ts"
+        - "test/"
+        - "tests/"
+        - "__tests__/"
+        - "__mocks__/"
+        - "benchmarks/"
+        - "bench/"
+        - "examples/"
+        - "example/"
+        - "scripts/"
+        - "fixtures/"
+    # NOTE: semgrep's `{}` pattern matches ANY object literal (ellipsis semantics), which made
+    # this fire on `{ id: 1 } as T`. A regex is the honest expression of "empty literal".
+    pattern-regex: '\{\s*\}\s+as\s+(?!const\b)[A-Za-z_$]'
