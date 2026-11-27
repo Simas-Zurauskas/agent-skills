@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Preview · R{R} V{NN} — Design Lab</title>
+  <link rel="stylesheet" href="../styles.css">
+  <include src="explorations/parts/r{R}-v{NN}-head.html"></include>
+</head>
+<body data-section="explorations" class="lab-page">
+  <div class="lab-shell">
+    <include src="_lab/shell/sidebar.html"></include>
+    <main class="lab-main">
+      <header class="lab-header"><div><h1>Preview · V{NN} {Variant name}</h1></div><include src="_lab/shell/controls.html"></include></header>
+      <div data-lab-sheet class="lab-sheet">
+        <div class="lab-sheet-body">
+          <section class="lab-sheet-section" id="r{R}-v{NN}">
+            <div class="lab-sheet-fit">
+              <include src="explorations/parts/r{R}-v{NN}-board.html"></include>
+              <div class="lab-row">
+                <!-- one figure per screen; the caption text = the screen's <title>, the frame title = the part after its first "·" -->
+                <figure class="lab-screen"><figcaption><a href="screen-r{R}-v{NN}-1.html">R{R} V{NN} · {Screen 1}</a><button data-reset class="lab-btn" title="Reset this screen">↺</button></figcaption><div class="phone-frame"><iframe src="screen-r{R}-v{NN}-1.html" title="{Screen 1}" class="phone-screen" loading="lazy"></iframe></div></figure>
+              </div>
+            </div>
+          </section>
+        </div>
+        <include src="_lab/sheet/sheet.html"></include>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
