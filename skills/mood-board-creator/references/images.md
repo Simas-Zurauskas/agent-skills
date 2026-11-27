@@ -55,8 +55,11 @@ systems, and a photo can carry the mood that type, color and layout should be ca
 
 Model ids and prices change: rediscover them every run, and never guess a parameter (most schemas reject unknown keys).
 
+If the `myapis` skill is not installed, use whatever image generation the session has (for example a WaveSpeed
+MCP server) or licensed stock photos, keep the same rules, and say which in the handover.
+
 ```bash
-S=~/.claude/skills/myapis/scripts
+S=$(ls -d ~/.agents/skills/myapis/scripts ~/.claude/skills/myapis/scripts 2>/dev/null | head -1)
 $S/ws.sh models --type text-to-image --cheap            # cheapest first
 $S/ws.sh schema bytedance/seedream-v4                   # exact params before any run
 $S/ws.sh run bytedance/seedream-v4 '{"prompt":"…","size":"2400*1800"}' --out "$RAW/scenes"

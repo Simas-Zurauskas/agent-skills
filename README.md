@@ -9,6 +9,7 @@ an `npx skills` source for every other tool, and a claude.ai organization sync s
 | [blueprint](skills/blueprint) | Define a whole product before development |
 | [blueprint-feature](skills/blueprint-feature) | Define one feature or change for an existing app |
 | [eng-rulebook](skills/eng-rulebook) | Engineering guidance, change checks and codebase audits |
+| [mood-board-creator](skills/mood-board-creator) | Visual directions as moodboards and realistic screens |
 | [ui-craft](skills/ui-craft) | Design judgement for anything a person sees |
 | [wiki-system](skills/wiki-system) | Source-backed codebase maps for coding agents |
 

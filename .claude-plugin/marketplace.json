@@ -36,6 +36,15 @@
       ]
     },
     {
+      "name": "mood-board-creator",
+      "description": "Explore distinct visual directions for a product as moodboards and realistic screens. Use for moodboards, visual directions, style tiles, art direction, design variants, or a next round from keep/push/kill feedback. Supports normal and thorough modes and lab, standalone or native editable Figma targets. Not production implementation or a design-system build.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/mood-board-creator"
+      ]
+    },
+    {
       "name": "ui-craft",
       "description": "Design judgement for any visual work an agent does, so the result is specific to the product and well crafted instead of generic AI output. Use whenever a task changes what a person sees - building or changing pages, screens, components, layouts, styling, landing pages, dashboards, forms, emails, mockups or HTML artifacts; choosing a visual direction; a redesign; or reviewing how something looks - even for a small styling change and even when nobody says \"design\". Also for \"make it look better\", \"less generic\", \"more polished\", \"why does this look AI-made\", \"review this UI\". Commands - direct (set a new visual direction), review (critique existing UI), check (run the rendered checks). Logos, splash screens and multi-variant exploration rounds have their own skills (logo-studio, splash-studio, mood-board-creator); they follow this skill's judgement inside their own process.",
       "source": "./",

@@ -16,7 +16,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SPEC_FIELDS = {"name", "description", "license", "compatibility", "metadata", "allowed-tools"}
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
-ABS_PATH_RE = re.compile(r"/Users/[A-Za-z0-9._-]+/|/home/[A-Za-z0-9._-]+/")
+# A real home path. `/Users/me/` and `/home/me/` are allowed as obvious placeholders in examples.
+ABS_PATH_RE = re.compile(r"(?<![A-Za-z0-9._-])/(?:Users|home)/(?!me/)[A-Za-z0-9._-]+/")
 TEXT_SUFFIXES = {".md", ".mjs", ".js", ".ts", ".py", ".sh", ".json", ".yml", ".yaml", ".toml", ".txt", ".html"}
 
 errors, warnings = [], []
