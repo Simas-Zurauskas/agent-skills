@@ -17,8 +17,6 @@ Each skill is its own plugin, so it can be installed or shared on its own.
 
 ## Install
 
-The repo is private, so you need read access to it.
-
 **Claude Code**
 ```
 /plugin marketplace add Simas-Zurauskas/agent-skills
@@ -77,12 +75,13 @@ It links every skill into `~/.agents/skills` (Codex, Cursor, Gemini and the rest
   and merge when ready.
 - Tag releases per skill: `ui-craft/v4`. Older tags were imported the same way (`wiki-system/v43`).
 
-### wiki-system mirror
+### wiki-system in CI
 
-Other repos run wiki-system's GitHub Action and reusable workflows from
-`Simas-Zurauskas/wiki-system@stable`, and GitHub only runs those from a repo's root. That repo stays
-live as a mirror. After changing wiki-system here:
+Projects run wiki-system unattended through two reusable workflows at this repo's root (GitHub only
+runs reusable workflows from there) and the action in `skills/wiki-system/action.yml`:
+```yaml
+uses: Simas-Zurauskas/agent-skills/.github/workflows/wiki-system-update.yml@wiki-system/stable  # docs repo
+uses: Simas-Zurauskas/agent-skills/.github/workflows/wiki-system-signal.yml@wiki-system/stable  # source repos
 ```
-scripts/publish-mirror.sh wiki-system https://github.com/Simas-Zurauskas/wiki-system.git master
-```
-then tag the release in the mirror and move `stable` when ready.
+Release with `skills/wiki-system/scripts/release.sh <N>`: it pins the action to `wiki-system/vN`, tags it
+and moves `wiki-system/stable`, which every project follows.

@@ -4,7 +4,7 @@
 # Caller (in each source repo):
 #   on: push (branches: [main])
 #   permissions: {}
-#   jobs.signal.uses: Simas-Zurauskas/wiki-system/.github/workflows/signal.yml@stable
+#   jobs.signal.uses: Simas-Zurauskas/agent-skills/.github/workflows/wiki-system-signal.yml@wiki-system/stable
 name: wiki-system signal
 
 on:

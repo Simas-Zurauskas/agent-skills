@@ -19,18 +19,18 @@ to helpers. Custom nested/external documentation destinations are valid.
 
 ## CI
 
-Projects reuse two workflows from this repo and pass settings only, so a fix here reaches every
-project. Reference `@stable` (moved to each release) to receive updates, or a release tag such as
-`@v38` to pin. The pieces underneath, `action.yml` and `scripts/ci_run.sh`, can also be used directly.
+Projects reuse two workflows from the agent-skills repo and pass settings only, so a fix here reaches every
+project. Reference `@wiki-system/stable` (moved to each release) to receive updates, or a release tag such
+as `@wiki-system/v44` to pin. The pieces underneath, `action.yml` and `scripts/ci_run.sh`, can also be used directly.
 
-- `.github/workflows/update.yml`, called from the **docs repo**: clones the source repos named in
+- `.github/workflows/wiki-system-update.yml` (at the agent-skills root), called from the **docs repo**: clones the source repos named in
   `.state.json` with a GitHub App token, plans without a model, runs Claude Code headless only when
   source or structure needs it, gives structure errors up to two repair passes, validates, pushes the map,
   and optionally sets a select property on the Notion cards whose pull requests it covered (a
   `Failed` result also comments the reason). Runs are serialized per docs repo. Each starts from
   the docs repo's current default branch and covers the baseline-to-head range, so a pending run
   that GitHub replaces loses nothing. The run log is kept as a 7-day artifact.
-- `.github/workflows/signal.yml`, called from each **source repo** on push: starts the docs repo's
+- `.github/workflows/wiki-system-signal.yml` (at the agent-skills root), called from each **source repo** on push: starts the docs repo's
   update through the REST dispatch API. It never blocks a merge or deploy.
 
 Docs repo caller (`.github/workflows/wiki-update.yml`):
@@ -43,7 +43,7 @@ permissions: {contents: write}
 jobs:
   update:
     if: vars.WIKI_AUTO_UPDATE != 'false'
-    uses: Simas-Zurauskas/wiki-system/.github/workflows/update.yml@stable
+    uses: Simas-Zurauskas/agent-skills/.github/workflows/wiki-system-update.yml@wiki-system/stable
     with:
       source: ${{ inputs.source }}
       sha: ${{ inputs.sha }}
@@ -63,7 +63,7 @@ on: {push: {branches: [main]}}
 permissions: {}
 jobs:
   signal:
-    uses: Simas-Zurauskas/wiki-system/.github/workflows/signal.yml@stable
+    uses: Simas-Zurauskas/agent-skills/.github/workflows/wiki-system-signal.yml@wiki-system/stable
     with: {wiki-repo: wiki-acme, app-client-id: Iv23lieDEWGv0WCFG4aL}
     secrets: {app-private-key: ${{ secrets.WIKI_APP_PRIVATE_KEY }}}
 ```

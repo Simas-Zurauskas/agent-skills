@@ -7,6 +7,17 @@ file is what tells the operator *what* changed between those versions.
 
 Introduced at v10; earlier versions are not chronicled here (see git history).
 
+## v44 — 2026-11-27
+
+**Moved into the agent-skills repo.** wiki-system now lives at `Simas-Zurauskas/agent-skills`, under
+`skills/wiki-system`. The reusable workflows moved to that repo's root as
+`.github/workflows/wiki-system-update.yml` and `wiki-system-signal.yml`, and releases are tagged
+`wiki-system/vN` with `wiki-system/stable` following the latest. Callers change one `uses:` line each:
+`Simas-Zurauskas/wiki-system/.github/workflows/update.yml@stable` becomes
+`Simas-Zurauskas/agent-skills/.github/workflows/wiki-system-update.yml@wiki-system/stable`, and the same for
+`signal.yml`. Inputs, secrets and behaviour are unchanged. The old repo keeps working at its last release
+until callers switch.
+
 ## v43 — 2026-11-26
 
 **Task workflow prompt: lessons from an audit of agent-built work.** Six clauses added to existing
