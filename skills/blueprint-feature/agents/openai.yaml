@@ -1,0 +1,6 @@
+interface:
+  display_name: "Blueprint Feature"
+  short_description: "Spec existing-product changes with proportionate review"
+  default_prompt: "Use $blueprint-feature init to define this feature against the existing app: "
+policy:
+  allow_implicit_invocation: true
