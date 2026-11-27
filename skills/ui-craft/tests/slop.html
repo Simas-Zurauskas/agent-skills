@@ -1,0 +1,59 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Slop fixture</title>
+<style>
+  :root { --cream: #F4F1EA; --paper: #F4F1EA; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--cream); font-family: Inter, system-ui, sans-serif; color: #b8b2a6; }
+  .hero { text-align: center; padding: 96px 24px; background: linear-gradient(135deg, #6366f1, #a855f7); }
+  .eyebrow { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; }
+  .pill { display: inline-block; border-radius: 999px; background: rgba(255,255,255,.2); padding: 4px 12px; font-size: 12px; }
+  h1 { font-family: "Playfair Display", Georgia, serif; font-size: 72px; letter-spacing: -0.06em; margin: 12px 0; }
+  h1 em { font-style: italic; color: #D97757; }
+  .grad { background: linear-gradient(90deg, #6366f1, #ec4899); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; padding: 48px; }
+  .card { border-radius: 12px; border: 1px solid #e5e5e5; box-shadow: 0 10px 30px rgba(0,0,0,.1); padding: 24px; background: #fff; text-align: center; transition: all .3s; }
+  .card .inner { border-radius: 12px; border: 1px solid #e5e5e5; box-shadow: 0 10px 30px rgba(0,0,0,.1); padding: 12px; min-width: 130px; min-height: 64px; }
+  .stripe { border-left: 4px solid #6366f1; border-radius: 12px; padding: 16px; margin: 24px 48px; min-height: 70px; }
+  .glass { backdrop-filter: blur(12px); padding: 24px; margin: 24px 48px; box-shadow: 0 0 40px 0 #6366f1; }
+  .mono { font-family: "JetBrains Mono", monospace; font-size: 11px; }
+  .stats { display: flex; gap: 48px; justify-content: center; }
+  .stats b { font-size: 40px; display: block; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 50% { opacity: .3; } }
+  .reveal { opacity: 0; transform: translateY(20px); transition: all .6s; }
+  .tiny { font-size: 10px; }
+  .wide { width: 2200px; height: 10px; }
+  button.icon { width: 18px; height: 18px; padding: 0; border: 0; outline: none; }
+  a.cta { outline: none; }
+  p, h2, h3 { text-align: center; }
+</style>
+</head>
+<body>
+<section class="hero">
+  <span class="pill">✨ New: AI-powered</span>
+  <h1>Elevate your <em>workflow</em></h1>
+  <p>Seamless collaboration — effortless results — world-class support — unlock it all — today.</p>
+  <a class="cta" href="#">Get started →</a> <a class="cta" href="#">Learn more →</a>
+</section>
+<p class="eyebrow">FEATURES</p>
+<h2 class="grad">Everything you need</h2>
+<div class="grid">
+  <div class="card"><div>🚀</div><h3>Fast</h3><p>Lorem ipsum dolor sit amet.</p><div class="inner">Nested</div></div>
+  <div class="card"><div>🔒</div><h3>Secure</h3><p>Trusted by John Doe at Acme.</p><div class="inner">Nested</div></div>
+  <div class="card"><div>⚡</div><h3>Simple</h3><p>Design · Build · Ship</p><div class="inner">Nested</div></div>
+</div>
+<p class="eyebrow">BY THE NUMBERS</p>
+<h2>Loved by teams</h2>
+<div class="stats"><div><b>99%</b><span>uptime</span></div><div><b>10k+</b><span>users</span></div><div><b>4.9</b><span>rating</span></div></div>
+<div class="stripe"><p>01 — Plan</p><p>02 — Build</p><p class="mono">STATUS · LIVE · V2</p><p class="mono">UPDATED 6:12</p><p class="mono">BATCH NO. 047</p></div>
+<div class="glass"><span class="dot"></span> Live <span class="tiny">tiny legal text here</span></div>
+<p class="reveal">Hidden one never shown</p>
+<form><input type="email" placeholder="Email"><button class="icon"><svg width="12" height="12"></svg></button></form>
+<img src="missing.png">
+<div class="wide"></div>
+</body>
+</html>
