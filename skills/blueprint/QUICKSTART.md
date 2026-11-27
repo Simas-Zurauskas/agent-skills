@@ -1,0 +1,61 @@
+# Quickstart — first hour, first sitting
+
+Pointer-only by design: nothing normative lives here, every line points at the rule's single home.
+If this file and a run file ever disagree, the run file wins and this file is wrong.
+
+## Before anything
+
+- Confirm no Blueprint already exists for this project — one per project, ever (→ rules.md pre-flight 1).
+- Know your target: a Notion teamspace page a human made, or a folder (→ spec/targets.md §2–3).
+- Know where the machinery lives: `wiki-{project}/blueprint/` when the project has a wiki folder,
+  `.blueprint/` in the workspace otherwise — `record/` is committed, `sources/` never
+  (→ spec/targets.md §5).
+- The one prohibition that catches first-timers: the skill **never reads a code repo** — what the
+  product *should* do comes from people, not from what somebody already built (→ rules.md "What this
+  skill does NOT do").
+- Optional: say how far this project is going — idea, prototype, private or public MVP — with
+  `/blueprint charter <plain words>`; with no charter everything is questioned at full depth
+  (→ charter-guide.md, spec/charter.md).
+- Sub-agent dispatches are mandatory for every independent check; know how your harness spawns one
+  before starting, or every check will honestly report itself unperformed (→ rules.md rule 6).
+
+## First hour — from client material to a draft
+
+1. Gather the material into files; nothing else is needed (→ init.md I1).
+2. Say `/blueprint init`. It captures sources, grills and prints a skeleton, and writes the Blueprint
+   in one go; `/blueprint init soft` stops for your approval first (→ init.md I3).
+3. Read the NOT USED list in the printed skeleton as carefully as the skeleton itself — it is where
+   gated commercial material, and every specific the content rule held back, gets named
+   (→ init.md I3).
+4. Let it write features, then read the questions it ends with — they are live, and yours to answer,
+   reject, or carry into a client packet (→ spec/databases.md §3, `Open`).
+
+## First sitting — questions and answers
+
+5. Read the live questions in the UI at your own pace: answer directly, or reject **with a reason** — the reason
+   decides the marker's fate (→ spec/doc-shape.md §9 route 4).
+6. Expect few questions: only client-gating build decisions qualify; convention becomes labeled
+   defaults kept as written (veto any with "drop #n"), content becomes slots on one manifest, and every drafted
+   question is read cold before it is written, ten to a reader (→ questions.md Q4).
+7. Too many basic questions? Say `/blueprint answer` — the author drafts defensible answers and a
+   fresh challenger checks them. Answered money, scope, legal, wording and data choices are named for
+   your review; breached limits, failed tests and grounded objections leave rows open. Overrule any
+   delegated answer before resolve; `answer soft` permits only grounds 1–2 (→ answer.md W2–W5).
+8. Say `/blueprint resolve` to write vetted answers in. It commits one verified item at a time and
+   reads everything back (→ resolve.md R3–R5).
+9. Say `/blueprint status` any time — read-only, tells you what to do next (→ status.md).
+
+## What a sitting costs
+
+- A sitting is ten items; a run keeps opening sittings until a named stop reason fires
+  (→ resolve.md R5).
+- A grill is sized to what changed: at most four dispatches, unless you say
+  `/blueprint questions full` (→ execution.md, the cost section).
+- Every write run logs a cost line — dispatches, tokens, wall-clock (→ resolve.md R5).
+- A run-log entry is a closed list of line kinds, not prose; explanations go in the report
+  (→ resolve.md R5).
+
+## How you know where it stands
+
+10. Nothing ever declares it finished — say `/blueprint status` and its `What is still unsettled`
+   block names every gap by row (→ status.md S3).

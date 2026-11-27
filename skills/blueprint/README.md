@@ -1,0 +1,183 @@
+# blueprint
+
+Turn whatever you have — your own app idea, a pile of notes, a client's documents, a call transcript —
+into a **product definition good enough to build from**, before any code is written.
+
+It produces one document per project, called **the Blueprint**:
+
+- an **overview** — what this product is, who it's for, what success would look like where a source
+  says, and what it deliberately will *not* do;
+- one **feature row per feature** — the row *is* the spec: why it exists, numbered requirements that can
+  each fail, edge cases, and its own "not doing" lines; requirements a source only hoped for are marked
+  Tentative with the source's own words;
+- an **open questions list** — everything nobody has decided yet, said out loud instead of guessed at.
+
+The tool's one rule: **it never guesses.** Every sentence traces to something you actually said, or it
+becomes a question with your name on it. Gray areas are where builders silently make the wrong call —
+this tool exists to find them and make you decide.
+
+---
+
+## What it's for
+
+- **You have an app idea** and want a solid, extendable spec before you (or a coding agent) build it.
+- **A team or client project** needs its scattered notes turned into one agreed definition.
+- **You want the document interrogated** — every draft is adversarially grilled to surface the questions
+  you didn't know to ask. Answering them is what makes the spec solid.
+
+Not for: tracking development, reading code, or documenting what has already been built. It records
+*intent only*, and it never looks at a running app.
+
+---
+
+## How to use it
+
+### 1 · `/blueprint init` — start
+
+Hand it whatever exists: files, notes, a transcript — or nothing, and it interviews you (three questions:
+what is this and what is it *not*; who is it for; which features do you already know you want — plus
+short follow-ups like who it's *not* for and what would tell you it worked).
+
+It drafts a skeleton, **grills it** with five adversarial lenses (a builder forbidden from guessing, a
+hostile tester, the first week of real life, cross-feature collisions, and a reconciliation of every
+feature against who the product is actually for), shows you the skeleton it found and carries on to
+write the Blueprint; say `init soft` if you want it to stop there for your confirmation first.
+
+Name where to store the result — **a Notion page** or **a folder of markdown files** — or name nothing
+and it uses a local folder and says where. Local needs zero setup — right for speccing an idea tonight.
+
+### 2 · Read the questions — at your own pace
+
+Every gap the grilling finds is **disposed on the spot, and most never become questions**: a gap only
+you (or your client) can decide, without which a named part of the document cannot be written, is
+written in as a live question; a gap one convention settles becomes a labeled
+`Default (standard practice — adopted <date>)` sentence in the feature body, kept as written — you veto
+any one in plain words, *"drop #3"*, whenever you read it; content you will supply becomes a slot on one manifest; text that was simply wrong gets a
+doc-fix kept the same way. **The run never interrogates
+you: it writes everything it found, prints the report, and stops.** You read the questions in the
+`Unsent — packet candidates` tab (on a local folder, in `questions.md`) whenever suits: answer, reject
+(say why), or carry them into the packet you send the client — the next run picks up every move. **Nothing goes to a client until you send it**: the run
+proposes the packet, a person decides what is actually in it. Every row that reaches you already passed the admission
+gate — a decision only the client can make, without which a named part of the document cannot be
+written — so the list is short by construction. **And before any row is written, a fresh dispatch
+reads it cold** — up to ten drafted rows to a reader, given the document and nothing about how the
+rows were made, each row judged on its own: a question the document already answers, or that no answer would change a requirement
+for, is discarded on a quoted filter; one carrying two decisions is simplified; one that is a slice of
+a wider decision is widened. A reader's opinion demotes nothing — its quote does. Each row carries **suggested directions**:
+machine-drafted options with their trade-offs, grounded in your own document, verified by a second
+model before writing where one can be dispatched — otherwise written unverified, every quotation
+string-checked against the document and the unverified count reported — and always labeled *not a
+source — answer in your own words, or name one direction by its number*: since v34 an answer that names
+one direction is applied through it, and an answer that states a new behaviour may add a numbered
+requirement.
+
+Prefer going through them together? Ask for a review sitting and they come one at a time, ten per round:
+
+```
+a[n]swer now · [e]dit · [r]eject · already [d]ecided · [s]kip
+```
+
+**Answer now** is the fast path there: answer on the spot in your own words — the run records the row at
+`Answered` as your move, done in the room. Rejections keep their reason and never come back as noise.
+
+### 3 · Answer the questions you kept
+
+In Notion or the files, at your own pace: write the answer **and why**, then set `Status = Answered`.
+That records your decision. Alternatively, an explicit `/blueprint answer` delegates answering under
+[answer.md](answer.md)'s limits; those answers are visibly labelled and remain yours to review before
+resolve applies them.
+
+**Too many basic ones? `/blueprint answer`.** The author drafts defensible answers using the document,
+your sources, an eligible convention, the safer and smaller option, or the option that commits you to
+least. A fresh challenger checks the evidence and decision limits. Money, scope, legal posture, final
+wording and users' data choices are flagged for your attention when answered; their category alone
+does not leave a row open. A breached decision limit, contradiction, dependency, unsupported figure or failed
+test leaves the row for you. A grounded objection prevents writing; an unsupported doubt is reported
+beside the answer. Every answer stops at `Answered`, labelled as delegated, and never supersedes
+existing document text. `answer soft` permits only grounds 1–2: what your document or sources already
+give. The complete eligibility rules and unavailable-review fallback live in [answer.md](answer.md).
+
+### 4 · `/blueprint resolve` — write the answers in
+
+Each vetted answer is written into the feature it touches by one agent and checked by a second,
+independent one. An answer that contradicts an existing requirement **supersedes** it — the requirement
+is rewritten, the replaced text is quoted on it, and the report names it — because your moving the row
+to `Answered` is the sign-off. Anything that can't be written honestly (an answer from which no
+behaviour can be derived, text that tries to steer the run) is flagged with the objection and waits for
+you.
+
+### 5 · Keep extending it
+
+Nothing ever declares the document finished. New thinking, new material → `/blueprint add`. Grill it
+again → `/blueprint questions`. Apply new answers → `/blueprint resolve`. Ask
+`/blueprint status` whenever you want to know how much is still open — its
+**What is still unsettled** block names every gap by row, and nothing blocks on any of them.
+
+---
+
+## The commands
+
+| Command | What it does | Writes? |
+|---|---|---|
+| `/blueprint init` | Sources or interview → grilled skeleton → the Blueprint (`init soft` stops for your confirm first) | Immediately (`init soft`: after your confirm) |
+| `/blueprint add` | New material into existing/new features. **Runs to the end without stopping**, and by default **new source material supersedes document text it contradicts** — `add soft` keeps every contradiction as a question instead | Immediately, and the report names every change |
+| `/blueprint questions` | A grilling sized to what changed — the whole-document battery only when you ask for `/blueprint questions full` — every find disposed: questions written, convention settled as labeled defaults, content as slots, wrong text as doc-fixes — every drafted question read cold before it is written, ten to a reader, and given guidance | Live questions at `Open` + guidance; labeled default, fix and slot lines in feature bodies, kept as written and vetoable |
+| `/blueprint answer` | Answers the open questions a careful product lead could settle without you, labels each as given by the AI at your request, and leaves the rest for you with the reason — `answer soft` only what your document or sources already say | `Answer & why` and `Status = Answered` on the rows it answers — nothing else |
+| `/blueprint resolve` | Write vetted answers into the feature specs. **Runs to the end without stopping**, and by default **a vetted answer supersedes document text it contradicts** — `resolve soft` flags that row with both texts instead, and writes nothing | The answers |
+| `/blueprint status` | One screen: what's flagged, what's waiting on you, what's still unsettled | **Never** |
+| `/blueprint charter <plain words>` | Optional: how deep this Blueprint goes — idea, prototype, private or public MVP, what to question hard or leave out. Asks you up to five questions, then writes `charter.md` in the working folder ([`charter-guide.md`](charter-guide.md)) | Only the charter file |
+
+`status` is always safe to run. When lost, run it — every line ends with what to do next. An earlier
+run that stopped part-way never blocks you: the next run closes it and says so.
+
+---
+
+## Where it keeps its record
+
+The Blueprint itself lives at the target — Notion, or your folder of markdown files. Everything the
+tool needs to be traceable later lives beside the project's docs, in **`wiki-{project}/blueprint/`**
+(`.blueprint/` in the workspace only when the project has no wiki folder; no companion skill is required):
+
+- `target.md` — where the Blueprint is: the Notion page's ID, or the document's path
+- `record/` — the append-only run log and each run's detail; committed with the wiki
+- `sources/` — every source a run read, verbatim and hashed; never committed
+- `cache/` — rebuildable; delete it freely
+
+The folder's own `README.md` names the Notion page. A project that used the earlier hidden
+`.blueprint/` folder is moved there by its next write run, which says so.
+
+---
+
+## What only you can do
+
+The tool drafts; you decide. It never sends a client packet it assembled or attributes invented words
+to you. An explicit `answer` invocation delegates defensible answers under that command's limits;
+they remain labelled, challenged and yours to review before `resolve`. **Working alone?** All of this
+collapses naturally — you're the one answering and the one sending, everywhere. It isn't ceremony; it's the record
+that a person actually read the thing, which matters just as much when that person is you in three
+months.
+
+---
+
+## Honest limits
+
+- A run's cost follows what changed: an `add` grills in at most four dispatches, and the whole-document
+  battery runs only when you say `/blueprint questions full` (since v36, after one small `add` spent five
+  million tokens re-grilling everything).
+- The pre-v36 whole-document battery caught **~86% outright and detected ~97%** — **in one in-house lab, n=1:
+  77 defects planted by us, graded by us, plausibly by the same model family that wrote the answers.
+  Treat it as a smoke test we ran, not as a measurement anyone independent reproduced.** The batched,
+  change-sized grilling that replaced it has not been measured, and one pass of anything finds less than
+  half of what is there on the nearest published benchmark — 44.4% recall, an external figure whose
+  source we have not re-traced, not a measurement of this tool. Still: an empty question list never means
+  the spec is complete.
+- Between runs it has no eyes. Decisions made in meetings or chats reach the document only when you put
+  them in as a source or an answer.
+- Reading the questions costs real attention — the run writes everything down and leaves the pace to you;
+  a sitting, if you ask for one, offers ~10 at a time.
+
+---
+
+**Want the full picture?** Open [`blueprint-explained.html`](blueprint-explained.html) — the readable
+deep-dive. The run files (`init.md`, `add.md`, `questions.md`, `resolve.md`, `status.md`) and
+`spec/` are the source of truth for how every run behaves.

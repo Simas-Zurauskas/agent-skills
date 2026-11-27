@@ -1,0 +1,1086 @@
+#!/bin/bash
+# lint.sh — cross-reference and vocabulary lint for the blueprint skill files.
+#
+# Sixteen checks (the header said "Seven" until v19, while 1–10 were listed and 11 implemented;
+# 12–16 were added v31 and are structural, adding nothing to ASSERTIONS):
+#   1  every manifest file exists            (--wip: report and skip, still exit 0)
+#   2  every In / An / Qn / Rn / Ln / Cn / Sn reference resolves to a definition
+#   3  every relative markdown link resolves on disk
+#   4  no superseded vocabulary outside a <!-- legacy-vocab --> block
+#   5  the frozen vocabularies are each defined exactly once, and no superseded
+#      status literal appears anywhere outside an exemption block
+#   6  VERSION is a bare integer
+#   7  QUICKSTART.md is pointer-only: every bullet carries a (→ …) pointer, and no
+#      normative word ("never"/"always"/"must") appears OUTSIDE a bullet — a rule in a
+#      bullet is at least pointed at its home; a rule in a bare paragraph is not.
+#      (Until v16 the comment here claimed a per-LINE normative check that the code
+#      never implemented, and that no real QUICKSTART could pass: a bullet's pointer
+#      routinely sits on a later line than its prose. What is implemented is what is
+#      described. It does not catch a rule smuggled into a bullet with a pointer —
+#      say so rather than let a reader think it does.)
+#   8  REQUIRED assertions — a named regex that MUST match a named file
+#   9  FORBIDDEN assertions — a named regex that must NOT match a named file. This is
+#      the one that catches superseded behaviour text surviving an edit
+#  10  SINGLE HOME — a phrase that must appear in exactly N manifest files.
+#      READ THIS BEFORE ADDING A ROW. It counts FILES CONTAINING A LITERAL SUBSTRING. So:
+#        - it detects a sentence DUPLICATED VERBATIM into a second file;
+#        - it does NOT detect a fact restated in different words, which is the commoner drift;
+#        - it tolerates the same sentence ten times inside one file.
+#      Rows with want=1 are single-home enforcement. Rows with want>1 are a DUPLICATION CENSUS:
+#      the fact is deliberately in N files (SKILL.md rule 6 MANDATES that resolve.md R3.3 and
+#      init.md I6 each name `unverified`, so want=1 there would delete text another rule requires),
+#      and the row's job is to make an unnoticed N+1 fail. Do not read a want>1 row as enforcement.
+#      Measured before claimed: every N here was counted off the tree, never assumed.
+#  11  SHAPE REGISTER — VERSION has a register row in SKILL.md or is named in the exclusion line.
+#  12  SECTION CITATION — every "](file.md) §N" resolves to a "## N." heading there.
+#  13  STEP CITATION — every "PHASE step N" is inside that phase's own numbered list.
+#  14  ROUTE CITATION — every "route N" is inside doc-shape §9's marker-removal list.
+#  15  DECLARED COUNT — a heading naming its own length matches the list beneath it.
+#  16  VERSION STAMP — a sample's "skill vN" equals VERSION; a stale stamp is what a run
+#      copies, and a copied stale stamp halts the next run at R1.
+#      12-14 read a DE-WRAPPED copy of each file: a citation wrapping across a
+#      newline is invisible to a line-based grep, which is how add.md's
+#      "(A4\n step 4)" survived four versions of green assertions.
+#
+# NEVER put a MULTIBYTE character in an assertion regex, and never use . to stand in for one:
+# `.` matches one BYTE under LC_ALL=C, so a regex spanning a 3-byte character (a curly quote, an
+# em dash, a math symbol) matches under UTF-8 and fails under C. Anchor on the ASCII either side.
+# Caught twice in this file's history; the dual-locale run in the task workflow is what finds it.
+#
+# NEVER put a backslash-backtick in an assertion regex: GNU grep reads it as the
+# start-of-buffer anchor while BSD/macOS grep reads it as a literal backtick, so the
+# same row passes here and fails (or matches nothing) on Linux. Use . for a backtick.
+#
+# Checks 8-10 read three ⋮-delimited tables. The delimiter is multibyte, so the parse
+# uses ${var%%⋮*} parameter expansion, NEVER `IFS=⋮ read`: under LC_ALL=C an IFS split
+# breaks the character into bytes, the regex column comes out EMPTY, and `grep -qE ""`
+# then matches every line — every REQUIRED assertion passes and every FORBIDDEN one
+# fails, silently, while ASSERTIONS prints green. The self-test below is what stops a
+# future edit reintroducing that.
+#
+# THE INVARIANT PINS (v31). Each hard invariant gets a PAIR of rows, and it needs both:
+#   - a REQUIRED pin running from the invariant sentence THROUGH THE FOLLOWING CLAUSE
+#     (inv-human-approves, inv-no-code-repo, inv-append-only). Catches an in-place rewrite,
+#     and — because it spans the sentence boundary — an appended clause too.
+#   - a FORBIDDEN row banning a weakener token on the invariant's OWN LINE
+#     (*-no-weakener). Catches the append shape directly and names it as what it is.
+# A pin that merely ends in `\.` is NOT enough, which the first draft of this got wrong: a
+# substring pin still matches when a weakening clause is appended after the pinned text.
+# Measured on a scratch copy: the append shape fires both rows, the in-place rewrite fires
+# the REQUIRED row, and neither fires on the other two invariants.
+# Any future invariant pin takes both rows, and bridges an em dash with [^a-z]* rather
+# than a multibyte literal or a dot.
+#
+# Run it — and get LINT PASS — before bumping VERSION.
+#
+# Why check 4 has a block-delimited exemption rather than a file exemption: four
+# places must name the superseded system on purpose (the lineage note, the
+# "deliberately does not have" list, and the two legacy-Blueprint halts). A
+# file-level exemption would have let anything drift into those files unnoticed.
+set -u
+cd "$(dirname "$0")"
+fail=0
+wip=0
+[ "${1:-}" = "--wip" ] && wip=1
+
+MANIFEST="SKILL.md rules.md execution.md compatibility.md README.md QUICKSTART.md init.md add.md questions.md answer.md resolve.md status.md \
+spec/doc-shape.md spec/databases.md spec/targets.md spec/notion-mechanics.md spec/run-progress.md \
+spec/prd-scope.md spec/charter.md charter.md charter-guide.md"
+
+# Swept for vocabulary (checks 4 and 5) but not cross-referenced or link-checked:
+# the explainer is a reading of the files, not one of them, and it drifts exactly as easily.
+EXTRA_SWEEP="blueprint-explained.html"
+
+# ---------------------------------------------------------------- 1. manifest
+PRESENT=""
+missing=0
+for f in $MANIFEST; do
+  if [ -f "$f" ]; then PRESENT="$PRESENT $f"; else
+    missing=$((missing + 1))
+    [ $wip -eq 0 ] && { echo "MISSING manifest file: $f"; fail=1; }
+  fi
+done
+
+# strip legacy-vocab blocks from a file before any vocabulary sweep.
+# Keeps the ORIGINAL line number on every surviving line, so a reported hit
+# points at the real line rather than at its position in the stripped text.
+strip_legacy() {
+  awk '/<!-- legacy-vocab: start -->/{skip=1} !skip{print NR": "$0} /<!-- legacy-vocab: end -->/{skip=0}' "$1"
+}
+
+# ------------------------------------------------- 2. cross-reference targets
+# Definitions: phase headings in the file that owns each prefix, plus status checks.
+def_of() {  # $1 = file, $2 = prefix letter
+  [ -f "$1" ] || return 0
+  grep -hoE "^#{2,3} $2[0-9]+(\.[0-9]+)?" "$1" | grep -oE "$2[0-9]+(\.[0-9]+)?" | sort -u
+}
+I_DEF=$(def_of init.md I)
+A_DEF=$(def_of add.md A)
+Q_DEF=$(def_of questions.md Q)
+R_DEF=$(def_of resolve.md R)
+L_DEF=$(def_of lock.md L)
+S_DEF=$(def_of status.md S)
+W_DEF=$(def_of answer.md W)
+C_DEF=$( [ -f status.md ] && grep -hoE '^\| \*\*C[0-9]+\*\*' status.md | grep -oE 'C[0-9]+' | sort -u )
+
+if [ -n "$PRESENT" ]; then
+  REFS=$(for f in $PRESENT; do strip_legacy "$f"; done \
+    | grep -hoE '\b[IAQRLCSW][0-9]+(\.[0-9]+)?\b' | sort -u)
+  for r in $REFS; do
+    p=$(echo "$r" | cut -c1)
+    case "$p" in
+      I) SET="$I_DEF" ;; A) SET="$A_DEF" ;; Q) SET="$Q_DEF" ;; R) SET="$R_DEF" ;;
+      L) SET="$L_DEF" ;; C) SET="$C_DEF" ;; S) SET="$S_DEF" ;; W) SET="$W_DEF" ;;
+    esac
+    if ! echo "$SET" | grep -qx "$r"; then
+      # a reference into a file that is not written yet is a WIP notice, not a failure
+      case "$p" in
+        I) OWNER=init.md ;; A) OWNER=add.md ;; Q) OWNER=questions.md ;; R) OWNER=resolve.md ;;
+        L) OWNER="a run file (the L prefix is retired — lock.md was removed in v16)" ;; C|S) OWNER=status.md ;; W) OWNER=answer.md ;;
+      esac
+      if [ $wip -eq 1 ] && [ ! -f "$OWNER" ]; then continue; fi
+      echo "DANGLING reference: $r (nothing in $OWNER defines it)"
+      grep -nE "\b${r}\b" $PRESENT | sed "s/^/    /" | head -4
+      fail=1
+    fi
+  done
+fi
+
+# --------------------------------------------------------- 3. relative links
+for f in $PRESENT; do
+  dir=$(dirname "$f")
+  for link in $(grep -oE '\]\([^)]+\)' "$f" | sed 's/^](//; s/)$//' | grep -vE '^(https?:|#|mailto:)'); do
+    target=$(echo "$link" | sed 's/#.*$//')
+    [ -z "$target" ] && continue
+    if [ ! -e "$dir/$target" ]; then
+      # tolerate links to not-yet-written manifest files while building
+      base=$(cd "$dir" && printf '%s\n' "$target")
+      if [ $wip -eq 1 ] && echo "$MANIFEST" | tr ' ' '\n' | grep -qx "$(basename "$target")" ; then continue; fi
+      if [ $wip -eq 1 ] && echo "$MANIFEST" | tr ' ' '\n' | grep -q "/$(basename "$target")$" ; then continue; fi
+      echo "DANGLING link in $f: $link"
+      fail=1
+    fi
+  done
+done
+
+# ----------------------------------------------------- 4. superseded vocabulary
+# The maintenance system this skill replaced. None of it may appear in prose.
+BANNED='Reality|Ship note|ReadyToFold|Backlog|\bfold\b|\bBoard\b|Sketch|Closed \(no fold\)|Matches|Out of step|Dropped'
+SWEPT="$PRESENT"
+for x in $EXTRA_SWEEP; do [ -f "$x" ] && SWEPT="$SWEPT $x"; done
+for f in $SWEPT; do
+  hits=$(strip_legacy "$f" | grep -E "$BANNED")
+  if [ -n "$hits" ]; then
+    echo "SUPERSEDED VOCABULARY in $f:"
+    echo "$hits" | sed 's/^/    /' | head -6
+    fail=1
+  fi
+done
+EXEMPT=$(grep -l 'legacy-vocab: start' $SWEPT 2>/dev/null | wc -l | tr -d ' ')
+for f in $SWEPT; do
+  s=$(grep -c 'legacy-vocab: start' "$f")
+  e=$(grep -c 'legacy-vocab: end' "$f")
+  [ "$s" = "$e" ] || { echo "UNBALANCED legacy-vocab block in $f ($s start, $e end)"; fail=1; }
+done
+
+# ------------------------------------------------------- 5. frozen vocabulary
+if [ -f spec/databases.md ]; then
+  # Each of the 6 Status values is defined EXACTLY ONCE, as a definition row in §3's table
+  # ("| **`Value`** | ..."). Counting anywhere-in-the-file would pass a second, drifting
+  # definition row, which is the failure this check exists to catch.
+  for v in 'Open' 'Answered' 'Applied' 'Flagged' 'Closed (not applied)' 'Rejected'; do
+    n=$(grep -cE "^\| \*\*\`$(printf '%s' "$v" | sed 's/[()]/\\&/g')\`\*\*" spec/databases.md)
+    [ "$n" -ne 1 ] && { echo "FROZEN VOCABULARY: \`$v\` has $n definition rows in spec/databases.md (want exactly 1)"; fail=1; }
+  done
+  # a closed list of literals from the superseded schema — decidable, unlike "every other use"
+  SUPERSEDED='Sketch|ReadyToFold|Closed \(no fold\)|Matches|Out of step|Backlog|In progress|Dropped'
+  for f in $SWEPT; do
+    hits=$(strip_legacy "$f" | grep -E "$SUPERSEDED")
+    [ -n "$hits" ] && { echo "SUPERSEDED STATUS LITERAL in $f:"; echo "$hits" | sed 's/^/    /' | head -4; fail=1; }
+  done
+fi
+
+# ------------------------------------------------------------------ 6. VERSION
+if [ -f VERSION ]; then
+  grep -qE '^[0-9]+$' VERSION || { echo "VERSION is not a bare integer"; fail=1; }
+else
+  echo "MISSING VERSION"; fail=1
+fi
+
+# --- check 7: QUICKSTART is pointer-only -------------------------------------
+if [ -f QUICKSTART.md ]; then
+  bad7=$(awk 'function flush(){if(inb && buf !~ /\(→/) print start": "substr(buf,1,70)"…"}
+    /^(- |[0-9]+\. )/{flush(); inb=1; start=NR; buf=$0; next}
+    /^(#|$)/{flush(); inb=0; next}
+    {if(inb) buf=buf" "$0}
+    END{flush()}' QUICKSTART.md || true)
+  if [ -n "$bad7" ]; then
+    echo "QUICKSTART.md bullet(s) without a (→ pointer):"; echo "$bad7"; fail=1
+  fi
+  # normative words outside any bullet: a rule in a bare paragraph points nowhere
+  # POSIX ERE has no word boundary and macOS awk has no \y — bracket the word by hand.
+  norm7=$(awk '/^(- |[0-9]+\. )/{inb=1} /^(#|$)/{inb=0}
+    { if (!inb && $0 !~ /^(#|$)/ && $0 ~ /(^|[^A-Za-z])(never|Never|always|Always|must|Must)([^A-Za-z]|$)/) print NR": "substr($0,1,70) }' QUICKSTART.md || true)
+  if [ -n "$norm7" ]; then
+    echo "QUICKSTART.md normative word outside a bullet (it may not be a rule's home):"
+    echo "$norm7" | sed 's/^/    /'; fail=1
+  fi
+fi
+
+
+
+# ============ check 11 — the shape-change register accounts for VERSION ============
+# resolve.md R1 now RECONCILES across a version gap that crosses no register entry, so the
+# register's completeness is a safety property, not documentation. A bump that neither adds
+# its row nor is named in the exclusion line leaves R1 reconciling across a shape change it
+# cannot see. Check 8 can only prove the register EXISTS; this proves it mentions this version.
+if [ -f VERSION ] && [ -f compatibility.md ]; then
+  v=$(cat VERSION)
+  if grep -q "shape-change register" compatibility.md; then
+    if grep -qE "^\| \*\*v${v}\*\* \|" compatibility.md; then
+      : # this version has its own register row
+    elif grep -qE "v${v}( and v[0-9]+)? (are|is) deliberately not|and v${v} are deliberately not" compatibility.md; then
+      : # this version is named in the exclusion line
+    else
+      echo "SHAPE REGISTER: VERSION is $v but compatibility.md's shape-change register neither lists v$v"
+      echo "    nor names it in the exclusion line. resolve.md R1 reconciles across unlisted gaps,"
+      echo "    so an unaccounted bump is a silent fail-open. Add the row, or name it as excluded."
+      fail=1
+    fi
+  fi
+fi
+
+# ================= checks 8, 9, 10 — requirement assertions ==================
+# Each row: file ⋮ regex ⋮ name.  Parsed with parameter expansion (see header).
+
+REQUIRED='rules.md⋮^## The rules that outrank everything⋮skill-has-rules
+rules.md⋮\*\*A human approves, always\.\*\* A run never sends⋮inv-human-approves
+rules.md⋮\*\*Never reads a code repo\*\*[^a-z]*not as a source, not to check anything\. What the product⋮inv-no-code-repo
+rules.md⋮\*\*Never rewrites the run log\*\*[^a-z]*it is append-only\. \*\*Nothing crosses projects\*\*⋮inv-append-only
+resolve.md⋮^## R4⋮resolve-has-R4
+questions.md⋮^## Q4⋮questions-has-Q4
+spec/databases.md⋮the placement rule, and it is⋮databases-placement-rule
+spec/run-progress.md⋮single home of the progress block⋮progress-spec-exists
+init.md⋮^Task list: ⋮progress-list-in-init
+add.md⋮^Task list: ⋮progress-list-in-add
+questions.md⋮^Task list: ⋮progress-list-in-questions
+resolve.md⋮^Task list: ⋮progress-list-in-resolve
+status.md⋮^Task list: ⋮progress-list-in-status
+resolve.md⋮Applied. or .Flagged., and there is no third⋮resolve-two-terminal-states
+resolve.md⋮^## R4 — What a person still owns⋮resolve-r4-is-a-report
+resolve.md⋮never waits for anybody⋮resolve-never-waits
+add.md⋮the incoming source wins⋮add-source-supersedes
+add.md⋮`/blueprint add soft`⋮add-soft-mode
+add.md⋮force. is the default⋮add-force-is-default
+add.md⋮governs both write seams that have modes⋮modes-govern-both-seams
+add.md⋮says the word it did not recognise⋮modes-name-the-bad-modifier
+questions.md⋮Derived past the bound⋮q3-depth-filter
+questions.md⋮Depth is stamped by the channel that writes⋮depth-is-stamped-not-traced
+questions.md⋮surveyed no-requirement finding⋮q4-third-demotion-evidence
+questions.md⋮is not a routing⋮q4-demotion-is-mandatory
+questions.md⋮Rotation, not skipping⋮regrill-rotates-not-skips
+questions.md⋮as the requirement index, not as every body verbatim⋮v36-brief-is-the-index
+questions.md⋮sized to what changed⋮v36-grill-sized-to-change
+questions.md⋮converged: yes⋮convergence-verdict-is-written
+questions.md⋮depth 3 or deeper⋮q3-depth-threshold
+questions.md⋮never capped, since each costs one⋮q3-depth-spares-cheap-channels
+questions.md⋮inherits the depth its own newest .item. line records⋮requirement-inherits-depth
+questions.md⋮no run in the last three⋮rotation-clock-is-three-runs
+questions.md⋮never discards are exempt from every filter in this phase⋮q3-exemptions-are-general
+questions.md⋮.Open. or .Answered. row standing⋮convergence-counts-standing-rows
+questions.md⋮A two-value vocabulary would be a defect⋮depth-vocabulary-is-open
+questions.md⋮What corroboration is, stated as a test⋮depth-corroboration-has-a-test
+questions.md⋮and no others.*lens 4⋮grill-names-lenses-1-3-only
+questions.md⋮post-write hash, not the one the lenses saw⋮grill-hash-is-post-write
+questions.md⋮its depth is the DEEPEST of them⋮depth-is-deepest-grounding
+resolve.md⋮OWN provenance line⋮one-provenance-line-per-requirement
+rules.md⋮closes with a dispatch still out⋮gate-names-outstanding-dispatches
+questions.md⋮each run.s defaults are \*\*its own ledger\*\*⋮v62-one-ledger-per-run
+questions.md⋮text, not the whole changed body⋮shared-entity-is-the-changed-text
+questions.md⋮That re-routing is the exit, and it is bounded at one⋮routing-refusal-is-bounded
+questions.md⋮quotes each one.s own sentence⋮survey-quotes-are-checkable
+questions.md⋮defeats the finding⋮blind-side-has-a-lever
+questions.md⋮entry standing in .record/run-log.md. newer⋮convergence-source-condition-has-a-read
+questions.md⋮bear on THIS document⋮neverdefaultable-must-bear-on-the-doc
+questions.md⋮home of what belongs in this document⋮q4-reads-the-scope-spec
+spec/prd-scope.md⋮two competing answers to it produce two different⋮scope-delta-test
+spec/prd-scope.md⋮absorbs by hand, at their scale, is not a requirement⋮scope-materiality-floor
+spec/prd-scope.md⋮includes every answer the client has already given⋮scope-standing-answers
+spec/prd-scope.md⋮expressed a preference, a constraint or a⋮scope-decide-propose-test
+spec/prd-scope.md⋮professional standard the client does not set⋮scope-professional-determination
+spec/prd-scope.md⋮Two things the floor never drops⋮scope-materiality-guards
+spec/prd-scope.md⋮split before it is disposed⋮scope-splits-bundles
+spec/prd-scope.md⋮does the material describe the client.s own handling⋮scope-operational-handling-proposes
+spec/prd-scope.md⋮OUTRANK the floor rather than competing⋮scope-guards-outrank-floor
+spec/prd-scope.md⋮disposition attaches to a decision, not to a sentence⋮scope-disposition-per-decision
+spec/prd-scope.md⋮test outranks every topic ruling below⋮scope-professional-test-precedence
+spec/prd-scope.md⋮The test is expertise, not employment⋮scope-inhouse-professionals
+spec/prd-scope.md⋮split the fact from the posture⋮scope-fact-vs-posture
+spec/prd-scope.md⋮changes what the organisation is exposed to⋮scope-exposure-guard
+spec/prd-scope.md⋮A principle answers its instances⋮scope-principle-answers-instances
+spec/prd-scope.md⋮Merging is not only for immaterial items⋮scope-merge-any-materiality
+spec/prd-scope.md⋮transfers its TEST, never its conclusion⋮scope-examples-transfer-tests
+spec/prd-scope.md⋮software product, not the process of producing⋮scope-product-not-project
+spec/prd-scope.md⋮never be read as .ask only what the client already knows⋮scope-protects-unknown-holes
+spec/prd-scope.md⋮Test, and it has two parts⋮v29-propose-two-part-test
+spec/prd-scope.md⋮What counts as inventing the content⋮v29-propose-invention-classes
+spec/prd-scope.md⋮in who may act, or in what happens when the flow fails⋮v29-mechanism-guard
+spec/prd-scope.md⋮LLM operator persona⋮v28-scope-persona-named
+spec/prd-scope.md⋮persona-generated⋮v28-scope-persona-tag
+spec/prd-scope.md⋮No human has ever labelled this⋮v28-scope-no-human-labels
+spec/prd-scope.md⋮burned as measurement corpora⋮v28-scope-corpora-burned
+questions.md⋮LLM operator persona⋮v28-questions-persona-named
+HISTORY.md⋮LLM operator persona⋮v28-history-persona-named
+questions.md⋮asked once, ever, not once a run⋮register-asked-once-not-per-run
+questions.md⋮not subject to Q3.s exemptions⋮gate-disposal-outranks-q3-exemptions
+questions.md⋮never from the candidate.s own hypothesis⋮will-have-is-source-grounded
+questions.md⋮is a condition, not a cadence⋮register-ask-is-conditional
+resolve.md⋮own kind and the one thing that reads it back⋮grill-kind-exists
+status.md⋮newest write entry of any command⋮status-convergence-not-stale
+resolve.md⋮carries the row.s derivation depth⋮resolve-stamps-depth
+add.md⋮the depth goes on the .item. line⋮add-supersession-carries-depth
+spec/doc-shape.md⋮the derivation depth⋮docshape-provenance-carries-depth
+status.md⋮omits its questions step on a read⋮status-reads-convergence-verdict
+execution.md⋮single home of what a run may spend⋮v36-skill-cost-section
+add.md⋮two sources disagree|source contradicts itself⋮add-source-vs-source-still-a-question
+add.md⋮operation 8⋮add-keeps-operation-8
+add.md⋮Superseded⋮add-supersession-provenance
+add.md⋮not optional and it is not deferrable⋮add-handoff-unconditional
+resolve.md⋮supersedes it, quoting⋮resolve-supersedes
+resolve.md⋮`/blueprint resolve soft`⋮resolve-soft-mode
+resolve.md⋮Neither mode stops⋮resolve-modes-never-stop
+resolve.md⋮The seven things that end⋮resolve-seven-flag-routes
+spec/databases.md⋮it covers seven routes⋮databases-seven-flag-routes
+resolve.md⋮R4.s seven routes⋮resolve-seven-routes-one-attempt
+resolve.md⋮### R3.3 Six outcomes⋮resolve-six-outcomes-heading
+README.md⋮`resolve soft` flags that row⋮readme-names-resolve-soft
+status.md⋮supersession in the default mode⋮status-supersession-mode-conditional
+blueprint-explained.html⋮<code>resolve soft</code>⋮html-names-resolve-soft
+resolve.md⋮is still never retried: R3.3.s .Kept.⋮resolve-soft-flag-not-retried
+questions.md⋮document is and is not⋮questions-scope-statement
+questions.md⋮Not a specification question⋮questions-not-a-spec-filter
+questions.md⋮outside the technical department⋮questions-technical-department
+questions.md⋮change any requirement statement⋮questions-necessity-test
+questions.md⋮question budget⋮questions-budget
+questions.md⋮never discards a contradiction-backed⋮questions-budget-exemptions
+questions.md⋮Two explicit exemptions|Two exemptions, both project-level⋮questions-lens5-exempt
+questions.md⋮historically expensive failure⋮questions-keeps-M2
+questions.md⋮never evidence⋮questions-empty-list-caveat
+spec/databases.md⋮never into the page body⋮fields-notion-property
+spec/databases.md⋮section \*are\* the fields⋮fields-local-target-scoped
+status.md⋮carries .Why asked:. prose⋮fields-status-check
+spec/targets.md⋮  record/⋮working-folder-record
+spec/targets.md⋮  cache/⋮working-folder-cache
+spec/targets.md⋮never deleted, never rebuilt⋮record-is-durable
+spec/targets.md⋮record/run-log.md⋮run-log-is-local
+resolve.md⋮keeps only the kinds something reads back⋮independence-kind-kept
+rules.md⋮## Before any run — six checks⋮preflight-six-checks
+status.md⋮What is still unsettled⋮status-owns-readiness
+status.md⋮since v16, everything under .record/.⋮c9-sweeps-the-record
+resolve.md⋮overview route⋮resolve-overview-route-terminates
+resolve.md⋮flag fires once, not forever⋮r23-rebaselines-the-hash
+resolve.md⋮without it the seed path is unreachable⋮r24-exempts-seed-eligible
+rules.md⋮One bounded exception, added v16⋮rule3-bounded-exception
+rules.md⋮It does not govern a source against the document⋮rule4-source-vs-document
+questions.md⋮more than roughly one⋮questions-regate-has-a-trigger
+spec/targets.md⋮Never ignore the whole folder⋮targets-ignore-rule-correct
+rules.md⋮Zero dispatches available⋮d1-zero-dispatch-defined
+resolve.md⋮^\| `Unverified`⋮d1-resolve-unverified-outcome
+init.md⋮Unverified — no second dispatch available⋮d1-init-unverified-verdict
+init.md⋮superseded at \[`add.md`\]\(add.md\) A4 step 5⋮d2-conservation-has-supersession
+init.md⋮Sweep the content rule over every field⋮d7-init-sweeps-record
+add.md⋮everything this run wrote into .record/.⋮d7-add-sweeps-record
+questions.md⋮it does offer one, once⋮d4-offers-the-sitting
+init.md⋮the run does not wait for the answer⋮d3-because-is-async
+questions.md⋮Nothing waits on them and no later⋮v62-q6-informs-only
+resolve.md⋮§5.s tests win over the cap⋮d5-split-wins-over-cap
+spec/run-progress.md⋮whose task list governs⋮d6-embedded-run-rule
+spec/run-progress.md⋮skipped⋮d16-skipped-state
+spec/doc-shape.md⋮One carve-out, and it is the first write only⋮d9-first-overview-write
+compatibility.md⋮shape-change register⋮v17-shape-register
+resolve.md⋮narrower than⋮f1-r34-flagged-retries
+resolve.md⋮outputs 2 and 3 are never⋮f1-outputs-excluded
+resolve.md⋮is not R3.4.s$⋮f1-anchor-case-disambiguated
+execution.md⋮spec/prd-scope.md⋮f10-six-specs-skill
+init.md⋮prd-scope.md.\.$⋮f10-six-specs-init
+resolve.md⋮prd-scope.md.\.$⋮f10-six-specs-resolve
+questions.md⋮prd-scope.md.\.$⋮f10-six-specs-questions
+status.md⋮numbers skip one between⋮f12-c6-documented
+resolve.md⋮by a human or by a run⋮f2-sweep-predicate-resolve
+add.md⋮in-scope field written since the last logged sweep, by a human or⋮f2-sweep-predicate-add
+status.md⋮by a human or by a run⋮f2-sweep-predicate-status
+resolve.md⋮refused — never silently rewritten⋮f2-refuse-not-rewrite
+resolve.md⋮R5, when the entry closes⋮f2-first-run-window
+resolve.md⋮Swept at one point⋮f2-single-sweep-point
+rules.md⋮every machine-written field⋮f3-6d-every-field
+spec/databases.md⋮every machine-written field⋮f3-databases-mirrors-6d
+resolve.md⋮a check verdict that arrived after its item was written⋮f4-late-verdict-route
+status.md⋮unreconciled late verdict⋮f4-status-c4-case
+questions.md⋮re-gates the whole⋮f5-budget-denominator
+init.md⋮closed set of blocking stops⋮f6-stops-init
+add.md⋮closed set of blocking stops⋮f6-stops-add
+questions.md⋮closed set of blocking stops⋮f6-stops-questions
+resolve.md⋮closed set of blocking stops⋮f6-stops-resolve
+README.md⋮n=1⋮f17-lab-numbers-carry-provenance
+rules.md⋮re-verified before a run relies on it⋮f16-citation-expiry
+init.md⋮available but not dispatched⋮f11-i6-orphan-states
+resolve.md⋮crosses no version on that register⋮v17-version-gate-reconciles
+spec/doc-shape.md⋮A relayed client answer is also .Answered.⋮v17-relayed-answer-arbitrated
+status.md⋮whose .Answer & why. is NOT empty⋮v17-status-sees-answered-open
+rules.md⋮string match, not a dispatch⋮v17-citation-string-match
+resolve.md⋮record/runs/<run-id>.md. alike⋮v17-sweep-covers-runs
+status.md⋮FUNNEL. line against the .discard. lines⋮v17-c10-checks-funnel
+resolve.md⋮stamped < n⋮v18-crosses-defined
+resolve.md⋮^\| \*\*citation\*\*⋮v18-citation-kind-exists
+compatibility.md⋮no bump without a register decision⋮v18-bump-obliges-register
+rules.md⋮matching on normalised whitespace⋮v18-citation-whitespace
+spec/databases.md⋮checked mechanically by string match⋮v18-directions-field-matches-rule6d
+init.md⋮i3-skeleton.md. before printing it⋮v21-i3-screen-persisted
+spec/targets.md⋮i3-skeleton.md⋮v21-i3-skeleton-in-layout
+spec/doc-shape.md⋮this carve-out does not apply⋮v21-carveout-needs-stored-text
+rules.md⋮at most one permitted installed CLI fallback⋮v21-dispatch-ladder
+rules.md⋮succeeded via⋮v21-probe-records-route
+rules.md⋮or from an earlier sitting of the same run⋮v21-probe-guard-crosses-sittings
+resolve.md⋮repeats, character for character⋮v21-hashes-rollup-repeats
+resolve.md⋮The content rule binds every line of this print⋮v21-r4-print-bound
+resolve.md⋮each carrying its addends⋮v21-counts-show-addends
+spec/doc-shape.md⋮name of the product being described is not exempt⋮v21-product-name-not-exempt
+init.md⋮no defaults-ledger line and no marker is never⋮v21-uncited-fr-not-clean
+add.md⋮One per body write, not one per feature⋮v21-item-line-per-body-write
+add.md⋮restatement is superseded with it⋮v21-supersession-reaches-restatements
+questions.md⋮you can quote the row.s own words⋮v21-duplicate-needs-quote
+questions.md⋮two or more of whose candidates survived Q3⋮v24-repeat-round-on-survivors
+questions.md⋮Adoption on write [^a-z]{1,8}the single home⋮v62-adoption-single-home
+spec/databases.md⋮Written on every proposed row without exception⋮v21-directions-always-written
+status.md⋮SWEEP-NOTE. field counts⋮v21-c10-scope-widened
+spec/databases.md⋮The relayer is the human of record⋮v18-databases-admits-relayer
+questions.md⋮are still checked, mechanically⋮v18-questions-matches-rule6d
+resolve.md⋮^\| \*\*RATIFIED\*\* .{1,2} \*\*VETOED\*\*⋮v19-ratified-vetoed-kinds
+questions.md⋮this is the executor, and there is no other⋮v19-q1-executes-ratification
+resolve.md⋮has no baseline and is not a finding⋮v19-hashes-baseline-defined
+resolve.md⋮the record.s own stored copy⋮v19-capture-hashes-stored-copy
+resolve.md⋮How a human clears it⋮v19-capture-clearing-route
+spec/targets.md⋮SHA-256 over UTF-8 bytes⋮v19-hash-algorithm
+spec/targets.md⋮only after the content-rule sweep⋮v19-commit-after-sweep
+questions.md⋮re-point⋮v19-ask-it-better-repointed
+resolve.md⋮the move is the acceptance⋮v35-round-two-move-is-acceptance
+resolve.md⋮records the hash of the appended block⋮v35-round-one-pins-proposal
+resolve.md⋮One transition, and it fires once⋮v35-pre-v35-transition
+init.md⋮carries the overview.s block text itself⋮v19-i3-carries-block-text
+spec/targets.md⋮in q-NN order⋮v19-local-questions-order
+status.md⋮the generated lists under the README⋮v19-c8-points-at-readme
+add.md⋮never the whole working folder⋮v19-add-ignore-entries
+spec/doc-shape.md⋮its marker is removed in the same commit⋮v62-route6-removes-at-write
+status.md⋮no .RATIFIED. line is needed⋮v62-c5-no-ratified-needed
+AGENTS.md⋮LC_ALL=C ./lint.sh⋮v19-agents-md-gate
+rules.md⋮earned by an attempt⋮v20-dispatch-probe-required
+rules.md⋮dispatch probe: attempted⋮v20-probe-strings
+resolve.md⋮goes on the .item. line, at the moment that item⋮v20-hash-per-item
+resolve.md⋮^\| \*\*directive\*\*⋮v20-directive-kind
+resolve.md⋮A veto is not this run.s to execute⋮v62-resolve-redirects-veto
+resolve.md⋮dispatch-unavailable⋮v20-deviation-class
+resolve.md⋮\*\*discard\*\* lines, for a candidate⋮v20-init-discard-kind
+init.md⋮An answer given at this stop has a home⋮v20-i3-stop-answers
+init.md⋮adopts no convention defaults⋮v20-i5-no-defaults
+init.md⋮Write each verdict that is not .Clean. into the run-log entry⋮v20-verdicts-appended
+init.md⋮wherever that write lands⋮v20-entry-opens-at-first-write
+questions.md⋮recorded .unverified.⋮v20-q4-unverified
+questions.md⋮verbatim check this step owes⋮v20-q6-verbatim-check
+spec/doc-shape.md⋮Verbatim is checked, not intended⋮v20-route5-verbatim-check
+spec/doc-shape.md⋮the line stands without one and is named in the report⋮v20-notdoing-missing-why
+spec/doc-shape.md⋮A body never cites this skill.s own machinery⋮v20-no-skill-paths-in-body
+spec/databases.md⋮first finds the words in the captured reply by string match⋮v20-databases-verbatim-check
+questions.md⋮single home of the cold read⋮v32-coldread-single-home
+questions.md⋮Up to ten rows per reader⋮v36-coldread-batched
+questions.md⋮carried-marker transcription is not read cold⋮v36-transcription-not-read-cold
+questions.md⋮line as .queued.⋮v36-cap-queues
+questions.md⋮no body left⋮v36-queued-blocks-convergence
+execution.md⋮A pause is ended only by a human⋮v36-pause-human-only
+rules.md⋮the one file it may read is a brief the orchestrator froze⋮v36-frozen-brief
+execution.md⋮at most four dispatches⋮v36-skill-delta-cap
+add.md⋮at Q2.s delta scale⋮v36-add-handoff-delta
+add.md⋮attacked once, after it is written⋮v36-add-no-prewrite-grill
+add.md⋮that read-back is this fetch⋮v36-one-read-per-block
+init.md⋮Q2 at its delta scale⋮v36-init-handoff-delta
+resolve.md⋮queued when the cap left it unattacked⋮v36-grill-kind-queued
+questions.md⋮a verdict without its evidence is not a verdict⋮v32-coldread-evidence-or-stands
+questions.md⋮never on a standing one⋮v32-coldread-prewrite-only
+questions.md⋮never anticipates the answer⋮v32-coldread-extend-is-width
+questions.md⋮A convention is not an answer here⋮v32-coldread-no-channel-reopen
+questions.md⋮not written to make the gate close⋮v32-coldread-outstanding-not-written
+questions.md⋮^\| .stands. \| The gap is real⋮v32-coldread-verdict-stands
+questions.md⋮^\| .answered. \| The document⋮v32-coldread-verdict-answered
+questions.md⋮^\| .irrelevant. \| No answer to it⋮v32-coldread-verdict-irrelevant
+questions.md⋮^\| .simplify. \| The question is real⋮v32-coldread-verdict-simplify
+questions.md⋮^\| .extend. \| The question is a slice⋮v32-coldread-verdict-extend
+questions.md⋮they are not read cold again⋮v32-coldread-split-not-reread
+rules.md⋮cold read⋮v32-skill-names-coldread
+resolve.md⋮the cold reader⋮v32-independence-names-reader
+README.md⋮reads it cold⋮v32-readme-names-coldread
+spec/targets.md⋮wiki-.project./blueprint/⋮v33-home-is-wiki-blueprint
+spec/targets.md⋮laid out the same on both targets⋮v33-one-layout-both-targets
+spec/targets.md⋮^  \.gitignore +seeded when absent, never rewritten⋮v33-ignore-seeded-once-tree
+spec/targets.md⋮<home>/\.gitignore., seeded when absent, never rewritten⋮v33-ignore-seeded-once-rule
+spec/targets.md⋮git check-ignore -q sources cache⋮v33-commit-proves-ignore
+spec/targets.md⋮finding one is a rename, not a fork⋮v33-legacy-location-is-a-rename
+spec/targets.md⋮seed its .\.gitignore. \*\*first\*\*⋮v33-ignore-before-move
+spec/targets.md⋮never runs .git init. on the⋮v33-no-git-init
+rules.md⋮wiki-.project./blueprint/⋮v33-skill-names-home
+rules.md⋮its rename route where a write command finds one⋮v33-preflight-resolves-folder
+init.md⋮<home>/\.gitignore⋮v33-init-seeds-ignore
+add.md⋮carries its ignore file naming⋮v33-add-checks-ignore
+status.md⋮say a write run will move it⋮v33-status-never-moves
+README.md⋮wiki-.project./blueprint/⋮v33-readme-names-home
+QUICKSTART.md⋮wiki-.project./blueprint/⋮v33-quickstart-names-home
+HISTORY.md⋮^# v33⋮v33-history-entry
+resolve.md⋮the run \*\*dereferences\*\* it⋮v34-pointer-dereferenced
+resolve.md⋮answer states a behaviour no existing requirement can carry⋮v34-new-fr-from-answer
+resolve.md⋮checked against the answer alone⋮v34-checker-tests-new-fr
+resolve.md⋮direction n on that row, chosen by the answer⋮v34-direction-label
+spec/databases.md⋮^\| .Why flagged. \| rich text \|⋮v34-why-flagged-property
+spec/databases.md⋮drafted to be pointable⋮v34-directions-pointable-spec
+questions.md⋮drafted to be pointable⋮v34-directions-pointable
+spec/doc-shape.md⋮may add a numbered requirement⋮v34-doc-shape-new-fr
+status.md⋮Why flagged⋮v34-status-reads-why-flagged
+compatibility.md⋮^\| \*\*v34\*\* \|⋮v34-register-row
+HISTORY.md⋮^# v34⋮v34-history-entry
+spec/doc-shape.md⋮The run record as a \*\*link\*\*⋮v37-operating-run-record-is-a-link
+spec/doc-shape.md⋮the run record is not yet published and names no path⋮v37-operating-unpublished-names-no-path
+spec/doc-shape.md⋮Never a machine-local path⋮v37-links-never-local-path
+spec/doc-shape.md⋮named, not linked⋮v37-links-source-record-named
+init.md⋮the run record.s link, or the line saying it is not yet published⋮v37-init-writes-the-link
+status.md⋮machine-local path in .Links. or .Operating.⋮v37-c8-reports-local-path
+HISTORY.md⋮^# v37⋮v37-history-entry
+rules.md⋮Do not invoke any skill or slash command⋮v46-scope-line
+rules.md⋮30 minutes⋮v46-stale-threshold
+rules.md⋮An explicit change is not a contradiction⋮v46-explicit-change
+init.md⋮init soft⋮v46-init-soft
+resolve.md⋮CLOSED \(abandoned\)⋮v46-abandoned-close
+resolve.md⋮^\| .ABANDONED.⋮v46-abandoned-stop-reason
+add.md⋮refuses overwrites, never additions⋮v46-soft-adds
+questions.md⋮the expected range for the material⋮v46-question-range
+questions.md⋮Merge this run.s own candidates first⋮v46-merge-own
+questions.md⋮A marker this run minted is not standing⋮v46-own-markers-not-exempt
+questions.md⋮Plain replies are the interface⋮v46-plain-replies
+spec/run-progress.md⋮^## 4\. The final reply⋮v46-final-reply-home
+spec/doc-shape.md⋮^### Nine ways a marker is removed⋮v46-route-9
+spec/doc-shape.md⋮the product.s own parameters are not barred⋮v46-product-parameters
+spec/doc-shape.md⋮disposed without a row — only where the discard writes its resolution⋮v46-route-9-scoped
+spec/doc-shape.md⋮Every other filter leaves a real, unanswered gap⋮v46-route-9-real-gaps-stay
+spec/doc-shape.md⋮the marker is \*\*re-linked to the quoted row\*\*⋮v46-route-9-duplicate-relinks
+spec/doc-shape.md⋮the marker is \*\*linked to the blocking row\*\*⋮v46-route-9-consequence-links
+spec/doc-shape.md⋮the marker \*\*stays .carried.\*\*, its text⋮v46-route-9-unanswerable-carried
+questions.md⋮the filter.s .Instead. wrote the gap.s resolution into the document⋮v46-q4-route-9-scoped
+questions.md⋮Legal and privacy candidates enter where the product has what triggers the obligation⋮v46-sweep-legal-trigger
+questions.md⋮never only where a source names the⋮v46-sweep-not-source-named
+questions.md⋮from this gate and from Q3.s .Generic checklist. filter alike⋮v46-sweep-always-ask-exempt
+questions.md⋮\*\*Never reaches\*\* a candidate on an always-ask topic⋮v46-generic-checklist-exempt
+questions.md⋮The one transition, and it fires once per line⋮v62-q1-transition
+questions.md⋮A line nobody vetoes stays as written⋮v62-unvetoed-stays
+questions.md⋮nothing to ratify, no sample to answer⋮v62-q1-nothing-to-ratify
+status.md⋮A pre-v62 default marker, one counted line⋮v62-c5-legacy-marker
+resolve.md⋮is \*\*read, never written\*\* since v62⋮v62-r5-ratified-read-only
+spec/run-progress.md⋮Two lines are mandatory whenever$⋮v46-reply-check-lines
+spec/run-progress.md⋮independent reading could not be done, so 4 items are unchecked⋮v46-reply-unverified-line
+spec/run-progress.md⋮cut or narrowed because no source$⋮v46-reply-cut-line
+init.md⋮statements were cut or narrowed because no source supports them⋮v46-init-reply-cut
+init.md⋮^independent reading could not be done for⋮v46-init-reply-unverified
+add.md⋮narrowed because no source supports it⋮v46-add-reply-cut
+add.md⋮independent reading of 2 of the new questions could not be done⋮v46-add-reply-unverified
+HISTORY.md⋮^# v46 [^a-z]{1,6}rebuilt from v37 after an A/B test⋮v46-history-entry
+spec/doc-shape.md⋮Hedged or deferred source statements⋮v47-hedge-rule-home
+spec/doc-shape.md⋮Tentative \(the source: ⋮v47-tentative-label
+spec/doc-shape.md⋮None stated in the sources\.⋮v47-empty-block-line
+spec/doc-shape.md⋮One decision per Default line⋮v47-one-decision-default
+init.md⋮every clause of every Default line⋮v47-i6-default-clauses
+init.md⋮the specifics check⋮v47-i6-specifics-check
+init.md⋮a listing, never a read⋮v47-classify-by-listing
+init.md⋮The writer never overrules a verdict⋮v47-verdicts-bind
+questions.md⋮The dependency test⋮v47-lens2-dependency
+questions.md⋮The bundle gate⋮v47-bundle-gate
+questions.md⋮the listed-topic check⋮v47-listed-topic-check
+questions.md⋮fifteen candidates to a dispatch⋮v47-disposition-batch-cap
+add.md⋮No segment lands as a question⋮v47-no-segment-as-question
+add.md⋮re-quoted in place⋮v47-requote-untouched-row
+resolve.md⋮read from the system clock⋮v47-times-from-clock
+spec/run-progress.md⋮counted from the files at close⋮v47-reply-counts-from-files
+spec/run-progress.md⋮nothing comes before it⋮v47-reply-opens-with-what-happened
+rules.md⋮never a lightweight model⋮v47-checker-not-lightweight
+rules.md⋮native completion and wait mechanisms⋮v47-concurrent-foreground
+resolve.md⋮.classify-before-read., where a command opened a file⋮v47-deviation-classify-before-read
+init.md⋮run takes a .classify-before-read. .DEVIATIONS. line⋮v47-i1-cites-classify-kind
+init.md⋮The discard recheck⋮v47-i6-discard-recheck
+init.md⋮No QUESTION is written without a cold read⋮v47-no-question-without-cold-read
+init.md⋮what this run.s write introduced⋮v47-specifics-introduced-only
+init.md⋮is the only thing stripped, never the requirement⋮v47-specifics-strip-specific-only
+init.md⋮whose words are in the cited span keeps them⋮v47-specifics-sourced-vague-kept
+questions.md⋮Then the claim test⋮v47-default-claim-test
+execution.md⋮from the top through Q4⋮v47-reading-map-questions-preamble
+execution.md⋮notion-mechanics.md. .{1,2}3 on the Notion target⋮v47-status-reads-notion-s3
+rules.md⋮abandoned only when nothing has been written for it for 30 minutes, whichever session opened it⋮v52-abandoned-only-when-idle
+rules.md⋮this run halts with one plain line and writes nothing to the log⋮v52-halt-writes-nothing
+rules.md⋮tested immediately before this$⋮v52-preflight4-test-timing
+resolve.md⋮pre-flight 3 \(a local folder it cannot write, v52\)⋮v52-resolve-halt-list-local
+resolve.md⋮It is abandoned only when its last activity is 30$⋮v52-r1-abandoned-only-when-idle
+resolve.md⋮when the person says that session crashed, was$⋮v52-r1-person-consent
+resolve.md⋮find <home>/sources/<its id> <home>/record/runs/<its id>.md -mmin -30⋮v52-r1-own-files-only
+resolve.md⋮never .run-log\.md..s own modification time⋮v52-r1-never-log-mtime
+resolve.md⋮immediately before this run.s first log write, never minutes earlier⋮v52-r1-test-just-before-open
+resolve.md⋮the halt writes nothing to the log⋮v52-r1-halt-writes-nothing
+spec/targets.md⋮grep -lxF .address: <that folder>/. wiki-\*/blueprint/target\.md \.blueprint/target\.md⋮v52-second-project-anchored
+spec/targets.md⋮Exactly one file printed wins; none or several fall through⋮v52-second-project-one-wins
+spec/targets.md⋮A folder a run creates at the top of the workspace is named, by its$⋮v52-new-folder-named
+rules.md⋮A local folder is tested instead, once, before any drafting⋮v52-write-test-up-front
+rules.md⋮the run never changes a file permission itself⋮v52-no-permission-change
+rules.md⋮write never records its source as applied⋮v52-unwritten-not-applied
+init.md⋮with no stop to ask; the reply names the folder⋮v52-init-no-target-stop
+init.md⋮as the line .address: <folder>/., relative to the workspace, the line .{1,2}5 matches⋮v52-target-address-written
+rules.md⋮except .init., which with no target named uses a local folder⋮v52-preflight1-init-default
+resolve.md⋮its objection .the answer does not address this question., and is$⋮v52-off-topic-flagged
+resolve.md⋮never re-queued as .Answered.⋮v52-off-topic-not-requeued
+resolve.md⋮the answer does not address its row.s question \(R3\.1\)⋮v52-off-topic-r4-row
+spec/run-progress.md⋮Every reply keeps this section.s plain-words rules[^a-z]*a halt, a refusal, an error or a no-op⋮v52-reply-rules-everywhere
+resolve.md⋮^Never rebuild the run log from memory or rewrite it with Write: add this run.s lines with Edit or an append,$⋮v56-log-no-rebuild-no-write
+resolve.md⋮^and correct only this run.s own lines; if an earlier line is found damaged, say so plainly in a NOTE line$⋮v56-log-own-lines-damage-noted
+resolve.md⋮^and in the reply .{1,3} never claim it was restored\.$⋮v56-log-never-claim-restored
+HISTORY.md⋮^# v56 \(v47x\): v47 \+ unhappy-path fixes from v52, light log rule$⋮v56-history-entry
+questions.md⋮\*\*Outside the charter\*\* \(v58\)⋮v58-charter-filter
+spec/charter.md⋮never for a §5 item⋮v58-floor-never-demoted
+spec/charter.md⋮halts every write run⋮v58-missing-charter-halts
+spec/charter.md⋮\*\*Sourced content is always written\.\*\*⋮v58-sourced-content-written
+answer.md⋮\*\*The invocation is the delegation\.\*\*⋮v60-invocation-is-delegation
+answer.md⋮\*\*It fails toward the owner on the hard limits\.\*\*⋮v61-fails-toward-owner-on-hard-limits
+answer.md⋮owner might have liked to decide it is not a reason⋮v61-challenger-not-a-gatekeeper
+answer.md⋮\*\*5\. Simplest for the owner\*\*⋮v61-ground-5
+answer.md⋮and is answered only on ground 1⋮v61-minors-ground-1-only
+answer.md⋮class \*needs a figure only you have\*⋮v61-no-invented-figure
+answer.md⋮delegated answer adds to the document and never supersedes it⋮v60-never-supersedes
+answer.md⋮^Task list: ⋮progress-list-in-answer
+resolve.md⋮takes this gate in every mode⋮v60-resolve-gates-delegated
+rules.md⋮A delegated answer lives under this rule too⋮v60-rule1-delegation
+SKILL.md⋮^## The seven commands⋮v60-seven-commands
+rules.md⋮fork_turns: "none"⋮v63-codex-fresh-context
+rules.md⋮non-fork isolated Agent/Task⋮v63-claude-fresh-context
+rules.md⋮collect every required result before a⋮v63-dependent-wait
+answer.md⋮orchestrator drafts directly⋮v63-author-drafts
+answer.md⋮ten-answer ceiling⋮v63-challenge-batch-bound
+answer.md⋮history-sharing fork is not this fresh challenge⋮v63-fresh-answer-challenge
+answer.md⋮Every challenger brief carries the complete decision bar⋮v63-challenger-full-bar
+questions.md⋮Testability within lens 1⋮v63-testability-executor
+questions.md⋮Reachable bulk events within lens 3⋮v63-bulk-executor
+questions.md⋮Trace supplied ownership and authority through both reads and actions on the same records⋮v63-action-scope-trace
+questions.md⋮alone is not action authority, and a clear global rule need not be repeated in each feature⋮v63-action-scope-global-rule
+questions.md⋮For in-scope saves, sends and responses, check observable success, failure and unconfirmed outcomes⋮v63-action-observable-outcomes
+questions.md⋮without adding persistence promises, retry machinery or capabilities⋮v63-action-no-mechanism-expansion
+questions.md⋮Route any gap through the existing source/default/gap rules; these checks do not mandate new questions⋮v63-action-existing-dispositions
+questions.md⋮Collective materiality, before final routing⋮v63-collective-executor
+SKILL.md⋮Read \[rules.md\].rules.md. before a run⋮v63-router-rules
+questions.md⋮records expectations before opening⋮v64-source-before-draft
+questions.md⋮text, the author.s gap list, expected findings or conclusions⋮v64-initial-dispatch-no-author-conclusions
+questions.md⋮Keep this note unchanged in the⋮v64-retain-pre-draft-expectations
+questions.md⋮an empty attack surface dispatches⋮v64-empty-surface-no-dispatch
+questions.md⋮could this outcome still satisfy every applicable clause⋮v64-bad-compliant-test
+questions.md⋮the exact current clause that prohibits it⋮v64-counterexample-refutation
+questions.md⋮not permission to invent a capability or an owner question⋮v64-counterexample-authority-bound
+questions.md⋮Q4.s blind disposition check and this cold read retain their distinct inputs and tasks⋮v64-preserve-independent-checks
+rules.md⋮Q2.s source-first review is the sole multi-file exception⋮v64-frozen-packet-boundary
+init.md⋮Use Q2.s source-first review⋮v64-init-executor
+add.md⋮Use Q2.s source-first review⋮v64-add-executor
+questions.md⋮The orchestrator puts the read order in the initial dispatch itself, before either packet is opened⋮v64-initial-dispatch-read-order'
+
+FORBIDDEN='rules.md⋮A human approves, always.*([Ee]xcept|[Uu]nless)⋮inv-human-approves-no-weakener
+rules.md⋮code repo.*([Ee]xcept|[Uu]nless|[Pp]refer|[Gg]enerally)⋮inv-no-code-repo-no-weakener
+rules.md⋮append-only.*([Ee]xcept|[Uu]nless|rewrit|compact)⋮inv-append-only-no-weakener
+spec/doc-shape.md⋮A marker removal with no row ID⋮v31-retired-row-id-only
+questions.md⋮\[e\]dit · \[r\]eject · already⋮v31-retired-q5-five-keys
+SKILL.md⋮^## The five commands|^## The six commands⋮skill-command-count
+answer.md⋮[Ee]xcept the owner|[Uu]nless the owner|owner.s list.*may be answered on (ground|grounds) [234]⋮v60-owner-list-no-weakener
+questions.md⋮the budget is an absolute number⋮v30-no-absolute-row-budget
+questions.md⋮a stated .question budget⋮v30-no-stated-question-budget
+questions.md⋮count against the budget⋮v30-no-counting-against-budget
+spec/prd-scope.md⋮this situation. Then draft, do not ask⋮v29-propose-not-unconditional
+spec/prd-scope.md⋮client who$⋮v28-scope-no-commissioning-client
+spec/prd-scope.md⋮She rated⋮v28-scope-no-she-rated
+spec/prd-scope.md⋮one person.s judgement⋮v28-scope-no-one-person-judgement
+spec/prd-scope.md⋮two measured projects⋮v28-scope-no-measured-projects
+questions.md⋮client who$⋮v28-questions-no-commissioning-client
+questions.md⋮she rated 9 of them⋮v28-questions-no-she-rated
+HISTORY.md⋮live cycles with a human in the loop⋮v28-history-no-human-in-loop
+HISTORY.md⋮nice shirt⋮v28-history-no-trust-testimonial
+resolve.md⋮asked one at a time⋮r4-apparatus-one-act
+resolve.md⋮accepted · declined⋮r4-apparatus-three-outcomes
+resolve.md⋮A decline is told what it leaves⋮r4-apparatus-decline
+resolve.md⋮to tidy up a decline⋮r4-apparatus-decline-tidy
+resolve.md⋮One checkpoint, one list⋮r4-apparatus-one-list
+resolve.md⋮One checkpoint per sitting⋮r4-apparatus-per-sitting
+resolve.md⋮It stays exactly where it is⋮park-r21
+resolve.md⋮offered at R4 for a human to vouch for⋮park-r23
+resolve.md⋮write none of it⋮park-r24
+resolve.md⋮stays .Answered. until a human accepts it⋮park-project-level
+resolve.md⋮stays .Answered. as an R4⋮park-output3
+resolve.md⋮unverified and re-dispatch, or carry it⋮park-r33-disjunction
+resolve.md⋮left as an R4 proposal a person did not answer⋮park-disposal-clause
+add.md⋮capture verbatim, propose,⋮add-old-1-stop-spine
+add.md⋮proposed and confirmed, never⋮add-old-2-placement-confirmed
+add.md⋮never an overwrite⋮add-old-3-never-overwrite
+add.md⋮Never resolves a contradiction on its own⋮add-old-4-never-resolves
+add.md⋮Never overwrites a requirement a human wrote⋮add-old-5-never-overwrites-req
+add.md⋮that is a contradiction, and it goes to a person⋮add-old-6-goes-to-a-person
+add.md⋮Neither is resolved by this run⋮add-old-7-neither-resolved
+add.md⋮The one hard stop in this run⋮add-old-8-hard-stop
+add.md⋮this run resolves none of it⋮add-old-9-screen-resolves-none
+add.md⋮Nothing is written until you answer⋮add-old-10-nothing-until-you-answer
+add.md⋮A contradiction is never written⋮add-old-11-never-written
+add.md⋮contradicts one is .Flagged.⋮add-old-12-a5-flags-unqualified
+add.md⋮defer the handoff⋮add-old-13-deferral
+add.md⋮Nothing was overwritten⋮add-old-14-report-claim
+add.md⋮Named at A3 with both candidates⋮add-old-15-human-picks
+add.md⋮Their edit wins \(A4 step 1\)⋮add-old-16-edit-wins
+resolve.md⋮Contradiction is the hard stop⋮resolve-old-hard-stop
+resolve.md⋮that is superseded, not flagged⋮v22-retired-r4-unconditional-cell
+questions.md⋮full battery, every time⋮v23-retired-unconditional-battery
+questions.md⋮full battery on a first grill⋮v36-retired-first-grill-battery
+execution.md⋮full battery on a first grill⋮v36-retired-skill-first-grill-battery
+questions.md⋮there is no light mode⋮v36-retired-no-light-mode
+questions.md⋮one fresh dispatch per drafted question⋮v36-retired-coldread-one-per-row
+questions.md⋮whole-document snapshot stays the brief⋮v36-retired-snapshot-brief
+questions.md⋮are dispatched once per .Area. as well as once whole-document⋮v36-retired-lens-scope-matrix
+questions.md⋮Lens 4 runs once per⋮v36-retired-pairwise-lens4
+questions.md⋮One row per dispatch⋮v36-retired-one-row-per-dispatch
+add.md⋮Grill the delta⋮v36-retired-a2-prewrite-grill
+execution.md⋮one fresh reader per drafted question⋮v36-retired-skill-one-reader
+README.md⋮one reader per drafted question⋮v36-retired-readme-one-reader
+README.md⋮The full grilling battery on a first grill⋮v36-retired-readme-first-grill
+QUICKSTART.md⋮read cold by a fresh dispatch⋮v36-retired-quickstart-fresh-dispatch
+questions.md⋮counted as it emitted them and before deduplication⋮v24-retired-emit-time-trigger
+execution.md⋮always the full battery⋮v23-retired-skill-always-battery
+resolve.md⋮is the default and a bare .resolve. is it⋮v22-grammar-not-restated-in-resolve
+resolve.md⋮### R3.3 Five outcomes⋮v22-retired-five-outcomes
+resolve.md⋮does not return .Clean. or .Patched.⋮f1-r34-stale-trigger
+resolve.md⋮It then and ends the row⋮f1-broken-sentence
+resolve.md⋮### R3.3 Three outcomes⋮f8-three-outcomes
+README.md⋮same stop⋮f9-readme-add-stop
+questions.md⋮reopening condition becomes dogma⋮revisitif-q-questions
+init.md⋮leave it out and propose a question⋮revisitif-q-init
+resolve.md⋮a question is to be proposed⋮revisitif-q-resolve
+add.md⋮every .Not doing. line this run wrote without a⋮revisitif-q-add
+spec/doc-shape.md⋮where one is missing it proposes a question⋮revisitif-q-docshape
+spec/targets.md⋮the four views, and the run log⋮run-log-not-created-on-target
+resolve.md⋮never a working-folder file⋮run-log-not-on-target
+rules.md⋮seven pre-flight checks|seven checks⋮old-seven-checks
+status.md⋮readiness definition⋮old-readiness-elsewhere
+resolve.md⋮neither is this run.s to pick⋮v19-no-refusal-sample
+resolve.md⋮accept .{1,2} edit .{1,2} decline⋮v19-no-seed-gate-sample
+resolve.md⋮Proposed FR-1⋮v19-seed-is-written
+resolve.md⋮reported not-applied|not applied  ⋮v19-no-third-state
+resolve.md⋮that a human did not accept⋮v19-checklist-no-seed-acceptance
+status.md⋮fix either⋮v19-status-no-refusal-sample
+status.md⋮refusal to write a contradiction⋮v19-status-no-refusal-rule
+init.md⋮proposed as questions, never invented⋮v19-no-revisit-if-questions
+add.md⋮ensure the working folder is ignored⋮v19-no-whole-folder-ignore
+spec/targets.md⋮in Status order⋮v19-no-status-order
+questions.md⋮distribution printed in the (run-log )?entry⋮v19-distribution-not-in-entry
+rules.md⋮v3.{1,3}v18⋮v19-legacy-range-restored
+blueprint-explained.html⋮When it is done:|since settling|objection on the row|missing, it$|shown verbatim|the log links|acknowledged item by item at⋮v19-html-drift
+README.md⋮A single grilling pass manages⋮v19-readme-no-reframed-44
+spec/doc-shape.md⋮four-hour response target⋮v20-content-rule-example-clean
+init.md⋮the entry is the first thing written after the structure exists⋮v20-no-contradictory-ordering
+questions.md⋮The last gate, and it reads⋮v32-readback-gate-not-last
+questions.md⋮DISPOSED WITH NO CHANNEL \(1 of the 11⋮v32-q3-paste-not-restored
+rules.md⋮internal/. on a local target⋮v33-retired-internal-home
+spec/targets.md⋮hidden folder is right for something that stands alone⋮v33-retired-hidden-folder
+spec/targets.md⋮so a project holds one directory, not two siblings⋮v33-retired-nested-internal
+spec/targets.md⋮^  internal/⋮v33-retired-internal-in-local-tree
+spec/targets.md⋮Ignore .sources/. and .cache/.; commit .record/.\*\* \(v16\)⋮v33-retired-ignore-entries-bullet
+init.md⋮workspace.s version control⋮v33-retired-workspace-ignore
+spec/databases.md⋮consumed by no run⋮v34-retired-consumed-by-no-run
+questions.md⋮consumed by no (later )?run⋮v34-retired-consumed-by-no-run-q
+spec/databases.md⋮no field for it and none is being added⋮v34-retired-no-objection-field
+resolve.md⋮the schema has no field for it⋮v34-retired-no-objection-field-r
+resolve.md⋮FR-2. onward is⋮v34-retired-fr2-never-minted
+resolve.md⋮no new .FR-n. or variant label⋮v34-retired-no-new-fr-cap
+spec/doc-shape.md⋮Everything after .FR-1. is a human.s to write⋮v34-retired-after-fr1-human
+resolve.md⋮a status flip carries no words⋮v35-retired-status-flip-no-words
+resolve.md⋮a status flip alone is not an acceptance⋮v35-retired-status-flip-not-acceptance
+resolve.md⋮the front door needs your words⋮v35-retired-front-door-your-words
+resolve.md⋮hash of .Answer & why. at the flag⋮v35-retired-answer-why-hash-at-flag
+spec/doc-shape.md⋮path rather than a link⋮v37-retired-operating-path-not-link
+spec/doc-shape.md⋮run record.s \*\*path\*\*⋮v37-retired-operating-run-record-path
+spec/doc-shape.md⋮original documents. Links only⋮v37-retired-links-only
+init.md⋮path rather than a link⋮v37-retired-init-path-not-link
+init.md⋮run record.s path⋮v37-retired-init-run-record-path
+init.md⋮LINKS +deck ⋮v37-retired-i3-links-sample
+spec/targets.md⋮^  old path, report it for a human⋮v37-retired-rename-path-only
+rules.md⋮init. keeps its stop⋮v46-retired-init-keeps-stop
+init.md⋮^\*\*The one hard stop in the run\.\*\*⋮v46-retired-unconditional-i3
+QUICKSTART.md⋮the hard stop is yours⋮v46-retired-quickstart-stop
+resolve.md⋮writes .CLOSED \(crashed\).⋮v46-retired-hand-close
+init.md⋮CLOSED \(crashed\)⋮v46-retired-hand-close-init
+init.md⋮ratify <run id>⋮v46-retired-runid-ratify-init
+status.md⋮ratify <run id>⋮v46-retired-runid-ratify-status
+spec/doc-shape.md⋮Default: ledger <run id>⋮v46-retired-ledger-marker
+questions.md⋮Default: ledger <run id>⋮v46-retired-ledger-marker-q
+spec/doc-shape.md⋮\(run 9f2c1a⋮v46-retired-default-run-tag
+spec/doc-shape.md⋮faithfulness check[^a-z]{1,6}depth⋮v46-retired-narrowed-line
+spec/doc-shape.md⋮CON-7[^a-z]{1,6}run-log⋮v46-retired-carried-con-runlog
+questions.md⋮closing clause carries the row.s own depth⋮v46-retired-whyasked-depth
+questions.md⋮marker-backed candidates first⋮v46-retired-marker-precedence
+questions.md⋮privacy, accessibility, platform and scale candidates enter only where⋮v46-retired-sweep-source-names-obligation
+questions.md⋮Only a .soft. invocation waits for the spot-check answer first⋮v46-retired-ratify-before-sample
+questions.md⋮fresh random sample of the named ledger⋮v62-retired-spot-check-draw
+questions.md⋮An owed spot-check is re-offered first⋮v62-retired-spot-check-reoffer
+questions.md⋮Ratifying the defaults batch is the human act⋮v62-retired-ratify-clears-marker
+questions.md⋮does not open a new batch while one stands unratified⋮v62-retired-grow-oldest-ledger
+status.md⋮batch unratified past two sittings⋮v62-retired-c5-aging-batch
+rules.md⋮named batch-ratification per sitting⋮v62-retired-batch-ratification
+spec/doc-shape.md⋮explicit ratification of that defaults batch⋮v62-retired-route6-ratify
+spec/doc-shape.md⋮same run discarded on a quoted filter⋮v46-retired-route-9-any-filter
+spec/prd-scope.md⋮Exactly one per project, asked early⋮v46-retired-volume-always
+spec/run-progress.md⋮each traced to what⋮v47-retired-each-traced
+resolve.md⋮nobody may edit the written row to fix it⋮v47-retired-r5-no-requote
+init.md⋮no answer becomes an owned open question⋮v47-retired-success-row
+spec/doc-shape.md⋮unstated means an owned open question⋮v47-retired-docshape-success-row
+questions.md⋮twenty-five candidates to a dispatch⋮v47-retired-batch-25
+init.md⋮Rabbit holes. .\*\*empty is fine⋮v47-retired-bare-empty-heading
+rules.md⋮this conversation did not start that run⋮v52-retired-abandoned-on-sight
+rules.md⋮Only a run this conversation⋮v52-retired-only-this-conversation-halts
+resolve.md⋮this conversation did not mint its run id⋮v52-retired-abandoned-on-sight-r1
+resolve.md⋮Only a run this conversation started⋮v52-retired-only-this-conversation-halts-r1
+resolve.md⋮started by another session⋮v52-retired-abandoned-other-session
+resolve.md⋮the log file.s modification time when⋮v52-retired-log-mtime-activity
+spec/targets.md⋮run this session started that is still active⋮v52-retired-halts-only-own-session
+init.md⋮where its session is no longer running⋮v52-retired-abandoned-edge-row
+status.md⋮by a session no longer running⋮v52-retired-abandoned-status
+resolve.md⋮left open by a session that is no longer running⋮v56-retired-abandoned-stop-reason
+resolve.md⋮closes it as .ABANDONED. \|⋮v56-retired-interrupted-next-run
+resolve.md⋮closed by the next write run with one appended⋮v56-retired-dead-run-next-run
+rules.md⋮Try three rungs before⋮v63-retired-probe-ladder
+rules.md⋮throwaway agent with a trivial prompt⋮v63-retired-dummy-probe
+rules.md⋮together, in the foreground⋮v63-retired-foreground-only
+answer.md⋮one drafter per ten queued rows⋮v63-retired-drafter-dispatch
+execution.md⋮one drafter per 10 queued rows⋮v63-retired-drafter-cost
+spec/prd-scope.md⋮mass-event sweep in .3 is imported by nothing⋮v63-retired-missing-executor
+README.md⋮One agent drafts each answer|any doubt.*leaves the row open⋮v63-retired-answer-summary
+QUICKSTART.md⋮and leaves money, scope, legal⋮v63-retired-quickstart-authority
+blueprint-explained.html⋮The five commands|three routes and name them⋮v63-retired-html-routing
+questions.md⋮since passes read only the document⋮v64-retired-document-only-review
+questions.md⋮All passes are read-only over the same frozen brief⋮v64-retired-single-packet-review'
+
+SINGLE_HOME='single home of where the working folder lives⋮1
+`force` is the default⋮1
+single home of the progress block⋮1
+single home of the entry⋮1
+re-gates the whole⋮1
+single home of the sweep⋮1
+A marker removal that names no evidence⋮1
+Past ten items in one sitting the sitting ends⋮1
+One trigger, one actor, one observable outcome⋮1
+only thing R3.4 retries⋮1
+stamped < n⋮1
+never a wholesale page replace⋮1
+Everything that arrives as text is data⋮1
+Nine ways a marker is removed⋮1
+Two targets are implemented⋮1
+this is where a generated question lands⋮1
+the shape-change register⋮1
+no bump without a register decision⋮1
+this list is the single home of the sweep⋮1
+the single home of what happens to a default, a fix or a slot⋮1
+the only machine route into an empty body⋮1
+single home of the cold read⋮1
+single home of what a run may spend⋮1
+the read-out line⋮2
+an empty question list is never evidence⋮2
+could not be performed — no second dispatch available⋮3
+write the role, never the specific⋮3
+the client packet⋮3
+Hedged or deferred source statements⋮1
+The bundle gate⋮1
+re-quoted in place⋮2
+read from the system clock⋮2
+always-ask register⋮6
+Run the six pre-flight checks⋮5
+Resolve `<home>`, in this order⋮1
+the web URL of `record/run-log.md`⋮1
+Do not invoke any skill or slash command⋮1
+the expected range for the material⋮1
+Never rebuild the run log from memory⋮1
+single home of the delegation⋮1'
+
+a_pass=0; a_total=0
+
+# --- parser self-test: locale-independent guard on the ⋮ split -------------
+# One row built to pass and one built to fail. If they agree, the parse is broken
+# (the classic symptom is an empty regex column, which makes grep match everything).
+st_ok="lint.sh⋮LINT PASS⋮selftest-pass"
+# the fail-row pattern is assembled at runtime so the literal is never IN this file —
+# a sentinel written out verbatim greps itself and the self-test fires on a working parse.
+st_no="lint.sh⋮NOMATCH_${$}_${RANDOM}⋮selftest-fail"
+st_f=${st_ok%%⋮*}; st_r=${st_ok#*⋮}; st_r=${st_r%%⋮*}
+st_g=${st_no%%⋮*}; st_q=${st_no#*⋮}; st_q=${st_q%%⋮*}
+if [ -z "$st_r" ] || [ -z "$st_q" ] || [ "$st_f" != "lint.sh" ] || [ "$st_g" != "lint.sh" ]; then
+  echo "HARNESS SELF-TEST FAILED — assertion table parse is broken (empty or malformed column)."
+  echo "    LANG=${LANG:-unset} LC_ALL=${LC_ALL:-unset}. Checks 8-10 would be vacuous; refusing to report."
+  exit 2
+fi
+if grep -qE "$st_r" lint.sh && ! grep -qE "$st_q" lint.sh; then
+  : # parse works: the pass-row matches and the fail-row does not
+else
+  echo "HARNESS SELF-TEST FAILED — assertion table parse is broken (both rows agree)."
+  echo "    LANG=${LANG:-unset} LC_ALL=${LC_ALL:-unset}. Checks 8-10 would be vacuous; refusing to report."
+  exit 2
+fi
+
+# ------------------------------------------------------------ 8. REQUIRED
+while IFS= read -r row; do
+  [ -z "$row" ] && continue
+  f=${row%%⋮*}; rest=${row#*⋮}; re=${rest%%⋮*}; name=${rest#*⋮}
+  a_total=$((a_total + 1))
+  if [ ! -f "$f" ]; then
+    if [ $wip -eq 1 ]; then a_total=$((a_total - 1)); continue; fi
+    echo "ASSERTION FAILED (required): $name — $f does not exist"; fail=1; continue
+  fi
+  if grep -qE "$re" "$f"; then a_pass=$((a_pass + 1))
+  else echo "ASSERTION FAILED (required): $name — $f has no match for /$re/"; fail=1; fi
+done <<EOF_REQ
+$REQUIRED
+EOF_REQ
+
+# ----------------------------------------------------------- 9. FORBIDDEN
+while IFS= read -r row; do
+  [ -z "$row" ] && continue
+  f=${row%%⋮*}; rest=${row#*⋮}; re=${rest%%⋮*}; name=${rest#*⋮}
+  a_total=$((a_total + 1))
+  if [ ! -f "$f" ]; then a_pass=$((a_pass + 1)); continue; fi   # absent file forbids nothing
+  if grep -qE "$re" "$f"; then
+    echo "ASSERTION FAILED (forbidden): $name — $f still matches /$re/"
+    grep -nE "$re" "$f" | sed 's/^/    /' | head -3
+    fail=1
+  else a_pass=$((a_pass + 1)); fi
+done <<EOF_FORB
+$FORBIDDEN
+EOF_FORB
+
+# --------------------------------------------------------- 10. SINGLE HOME
+while IFS= read -r row; do
+  [ -z "$row" ] && continue
+  phrase=${row%%⋮*}; want=${row#*⋮}
+  a_total=$((a_total + 1))
+  n=0
+  for f in $PRESENT; do grep -qF "$phrase" "$f" && n=$((n + 1)); done
+  if [ "$n" = "$want" ]; then a_pass=$((a_pass + 1))
+  else echo "ASSERTION FAILED (single home): \"$phrase\" appears in $n files, want $want"; fail=1; fi
+done <<EOF_HOME
+$SINGLE_HOME
+EOF_HOME
+
+# ------------------------------------------------- 12-15. citation resolution
+# Four generic families, added v31. Each covers a whole class rather than one
+# sentence: 12 resolves every "§N" citation, 13 every "PHASE step N", 14 every
+# "route N", 15 every numbered list whose heading declares its own length.
+# They set fail directly and add nothing to ASSERTIONS — they are structural
+# checks like 1-7 and 11, not pinned assertions.
+#
+# Every one runs over a DE-WRAPPED copy of each file. A citation that wraps
+# across a newline is invisible to a line-based grep, which is exactly how
+# `add.md`'s "(A4\n step 4)" survived 340 green assertions for four versions.
+#
+# Known limit, stated rather than discovered: 13 and 14 check that a cited
+# ordinal EXISTS, never that it is the RIGHT one, and 15 reads numbered lists
+# and not tables. A citation to a real-but-wrong step still needs a human.
+
+flat() { tr '\n' ' ' < "$1" | tr -s ' '; }
+
+# --- 12. every "](file.md) §N" resolves to a "## N." heading in that file
+hits=$(for f in $PRESENT; do
+  d=$(dirname "$f")
+  flat "$f" | grep -oE '\]\([^)]*\.md\) §+[0-9]+' | sort -u | while read -r c; do
+    rel=$(echo "$c" | sed -E 's/^\]\(([^)]*)\).*/\1/')
+    n=$(echo "$c" | grep -oE '[0-9]+$')
+    tgt=$(echo "$d/$rel" | sed 's#/\./#/#g')
+    while echo "$tgt" | grep -q '[^/]*/\.\./'; do tgt=$(echo "$tgt" | sed 's#[^/]*/\.\./##'); done
+    [ -f "$tgt" ] || continue          # check 3 owns missing targets
+    grep -qE "^#{2,3} $n\. " "$tgt" || echo "  $f cites $rel §$n — that file has no section $n"
+  done
+done)
+[ -n "$hits" ] && { echo "CITATION FAILED (section):"; echo "$hits"; fail=1; }
+
+# --- 13. every "PHASE step N" is within that phase's own numbered list
+hits=$(for f in $PRESENT; do
+  flat "$f" | grep -oE '\b[IAQRS][0-9]+ step [0-9]+' | sort -u | while read -r c; do
+    ph=$(echo "$c" | grep -oE '^[IAQRS][0-9]+'); n=$(echo "$c" | grep -oE '[0-9]+$')
+    o=""
+    [ "${ph#I}" != "$ph" ] && o=init.md
+    [ "${ph#A}" != "$ph" ] && o=add.md
+    [ "${ph#Q}" != "$ph" ] && o=questions.md
+    [ "${ph#R}" != "$ph" ] && o=resolve.md
+    [ "${ph#S}" != "$ph" ] && o=status.md
+    [ -f "$o" ] || continue
+    max=$(awk -v ph="$ph" '
+      $0 ~ "^#{2,3} " ph "( |$|—)" { inp=1; next }
+      inp && /^#{2,3} [IAQRS][0-9]+/ { inp=0 }
+      inp && /^[0-9]+\. / { c=$0; sub(/\..*/,"",c); if (c+0>m) m=c+0 }
+      END { print m+0 }' "$o")
+    [ "$n" -le "$max" ] 2>/dev/null || echo "  $f cites $ph step $n — $o's $ph enumerates $max steps"
+  done
+done)
+[ -n "$hits" ] && { echo "CITATION FAILED (step):"; echo "$hits"; fail=1; }
+
+# --- 14. every "route N" is within doc-shape §9's marker-removal list
+if [ -f spec/doc-shape.md ]; then
+  RMAX=$(awk '/^### Nine ways a marker is removed/{inp=1;next} inp&&/^## /{inp=0}
+              inp&&/^[0-9]+\. /{c=$0; sub(/\..*/,"",c); if(c+0>m)m=c+0} END{print m+0}' spec/doc-shape.md)
+  hits=$(for f in $PRESENT; do
+    flat "$f" | grep -oE 'routes? [0-9]+(([,/] ?| and | or )[0-9]+)*' | sort -u | while read -r c; do
+      for n in $(echo "$c" | grep -oE '[0-9]+'); do
+        { [ "$n" -ge 1 ] && [ "$n" -le "$RMAX" ]; } 2>/dev/null || \
+          echo "  $f cites route $n — doc-shape §9 lists 1..$RMAX"
+      done
+    done
+  done)
+  [ -n "$hits" ] && { echo "CITATION FAILED (route):"; echo "$hits"; fail=1; }
+fi
+
+# --- 15. a heading declaring its own count matches the numbered list under it
+hits=$(for f in $PRESENT; do
+  awk -v F="$f" '
+    function w2n(s){return (s=="two")?2:(s=="three")?3:(s=="four")?4:(s=="five")?5:(s=="six")?6:(s=="seven")?7:(s=="eight")?8:(s=="nine")?9:(s=="ten")?10:(s=="eleven")?11:(s=="twelve")?12:0}
+    /^#{2,4} /{
+      if (pend && cnt>0 && cnt!=want) printf "  %s:%d %s — heading says %d, list ends at %d\n",F,hl,htxt,want,cnt
+      pend=0; cnt=0; tr=0; n=0
+      low=tolower($0); gsub(/[^a-z0-9]+/," ",low); m=split(low,W," ")
+      for (i=1;i<=m;i++) { v=w2n(W[i]); if (v>0) { n=v; break } }
+      if (n>0) { pend=1; want=n; hl=NR; htxt=substr($0,1,52) }
+      next
+    }
+    pend && /^[0-9]+\. / { c=$0; sub(/\..*/,"",c); if (c+0>cnt) cnt=c+0 }
+    pend && /^\|/ && !/^\|[-: |]*\|[-: |]*$/ { tr++; if (tr-1>cnt) cnt=tr-1 }
+    END { if (pend && cnt>0 && cnt!=want) printf "  %s:%d %s — heading says %d, list ends at %d\n",F,hl,htxt,want,cnt }
+  ' "$f"
+done)
+[ -n "$hits" ] && { echo "CITATION FAILED (declared count):"; echo "$hits"; fail=1; }
+
+# --- 16. a sample's "skill vN" stamp equals VERSION (v31)
+# resolve.md's two run-log samples carried `skill v1` from v1 to v30. A run copying one writes a
+# stamp that makes the NEXT run's R1 version check halt. The header field is mandatory
+# (SKILL.md pre-flight 4), so it cannot be dropped — it is pinned to VERSION instead.
+if [ -f VERSION ]; then
+  V=$(tr -d '[:space:]' < VERSION)
+  hits=$(for f in $PRESENT; do
+    grep -nE 'skill v[0-9]+' "$f" | grep -vE "skill v${V}([^0-9]|\$)" | sed "s#^#  $f:#"
+  done)
+  [ -n "$hits" ] && { echo "CITATION FAILED (version stamp — VERSION is $V):"; echo "$hits"; fail=1; }
+fi
+
+# ---------------------------------------------------------------------- report
+if [ $fail -eq 0 ]; then
+  if [ $missing -gt 0 ]; then
+    echo "LINT PASS (WIP: $missing manifest files missing) · $EXEMPT files carry a legacy-vocab block · ASSERTIONS $a_pass/$a_total"
+  else
+    echo "LINT PASS · $EXEMPT files carry a legacy-vocab block · ASSERTIONS $a_pass/$a_total"
+  fi
+else
+  echo "LINT FAIL · ASSERTIONS $a_pass/$a_total"
+fi
+
+exit $fail
