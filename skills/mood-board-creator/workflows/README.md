@@ -81,10 +81,10 @@ It returns one `{ id, name, ok, status, summary, issues, shots, repaired }` per 
 ## Example: a standalone round for a new product
 
 ```js
-Workflow({ scriptPath: "/Users/me/dev/ai/SKILLS/mood-board-creator/workflows/foundations.js", args: {
+Workflow({ scriptPath: "/Users/me/dev/ai/SKILLS/agent-skills/skills/mood-board-creator/workflows/foundations.js", args: {
   product: "Potluck — a shared grocery and meal-plan app for flatmates; warm, practical, a bit cheeky; the key number is who owes what this week",
   task: "/Users/me/dev/potluck/moodboards-process",
-  skill: "/Users/me/dev/ai/SKILLS/mood-board-creator",
+  skill: "/Users/me/dev/ai/SKILLS/agent-skills/skills/mood-board-creator",
   scratch: "/tmp/potluck-scratch",
   sources: "PRD /Users/me/dev/potluck/docs/prd.md; brand voice /Users/me/dev/potluck/docs/voice.md; wireframes /Users/me/dev/potluck/wireframes/*.png",
   screens: [{ n: "1", name: "This week" }, { n: "2", name: "The list" }, { n: "3", name: "Settle up" }],
