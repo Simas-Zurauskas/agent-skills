@@ -41,9 +41,9 @@ proves implemented behavior, not intent, and a default branch does not prove dep
 
 ## Install and checks
 
+Install from the agent-skills library (see its top-level README), then:
+
 ```
-ln -s ~/dev/ai/SKILLS/blueprint-feature ~/.claude/skills/blueprint-feature
-ln -s ~/dev/ai/SKILLS/blueprint-feature ~/.agents/skills/blueprint-feature
 python3 scripts/bf.py selftest
 ```
 

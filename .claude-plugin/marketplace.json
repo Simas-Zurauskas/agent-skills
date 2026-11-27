@@ -1,0 +1,57 @@
+{
+  "$schema": "https://code.claude.com/schemas/marketplace.json",
+  "name": "simas-skills",
+  "owner": {
+    "name": "Simas Zurauskas"
+  },
+  "metadata": {
+    "description": "Simas's shared agent skills (Agent Skills standard)"
+  },
+  "plugins": [
+    {
+      "name": "blueprint",
+      "description": "Define a whole product before development from supplied ideas, notes and source material. Create or update a Blueprint, review requirement gaps, answer delegated questions, apply answers, inspect status or set project depth. Supports Notion and Markdown. Records product intent; does not inspect code or plan implementation. Use blueprint-feature for one change against an existing app.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/blueprint"
+      ]
+    },
+    {
+      "name": "blueprint-feature",
+      "description": "Define one feature or change for an existing app: learn current behavior, write failable requirements, preserve affected behavior, decide ordinary details and surface serious owner decisions. Use to spec a feature, grill it, apply answers or check readiness for planning. Commands: init, add, questions, answer, resolve, status, ready, auto. Not a whole-product PRD, implementation plan or code build.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/blueprint-feature"
+      ]
+    },
+    {
+      "name": "eng-rulebook",
+      "description": "Apply engineering guidance before nontrivial development or refactoring, selecting relevant guides for the task. Emphasizes simple maintainable solutions and meaningful tests. Also use for explicit guide requests, reviewing a change (check), a full codebase audit (audit), a priority-check audit (audit basics), or verifying a previous report (recheck). Audit topics are selected by the agent from the codebase.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/eng-rulebook"
+      ]
+    },
+    {
+      "name": "ui-craft",
+      "description": "Design judgement for any visual work an agent does, so the result is specific to the product and well crafted instead of generic AI output. Use whenever a task changes what a person sees - building or changing pages, screens, components, layouts, styling, landing pages, dashboards, forms, emails, mockups or HTML artifacts; choosing a visual direction; a redesign; or reviewing how something looks - even for a small styling change and even when nobody says \"design\". Also for \"make it look better\", \"less generic\", \"more polished\", \"why does this look AI-made\", \"review this UI\". Commands - direct (set a new visual direction), review (critique existing UI), check (run the rendered checks). Logos, splash screens and multi-variant exploration rounds have their own skills (logo-studio, splash-studio, mood-board-creator); they follow this skill's judgement inside their own process.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/ui-craft"
+      ]
+    },
+    {
+      "name": "wiki-system",
+      "description": "Create and maintain compact source-backed codebase maps for coding agents. Use when asked to document a codebase for agents, refresh its navigation map, check documentation freshness, or connect Codex/Claude entry instructions. Commands: init, update, update --full, check, context; aliases: recheck, recheck diff, claude. Supports Git repositories, linked worktrees and sibling-repo workspaces. Documentation refreshes only on request or through a project's own CI wiring (ci); ordinary coding reads relevant pointers without regenerating the map.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/wiki-system"
+      ]
+    }
+  ]
+}
